@@ -2,7 +2,6 @@ import requests
 import os
 import execjs
 import json
-import urllib3
 
 class Sign_xy:
     def __init__(self):
