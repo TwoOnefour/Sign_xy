@@ -2,6 +2,10 @@
 这是一个小雅签到的python程序，分析了一天js，复现了登陆的密码加密，并且能实现简单的签到功能，目前手上只有武理的号，所以没办法做其他学校的
 
 # Configuration
+## Install Module
+```
+pip install -r requirement.txt -i https://pypi.tsinghua.edu.cn/simple
+```
 ## Nodejs
 你需要配置nodejs并将其放入系统环境变量中，nodejs请访问[官网](https://nodejs.cn/)下载
 
