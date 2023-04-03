@@ -1,8 +1,5 @@
 import requests
-import urllib3
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 import execjs
 import json
 import urllib3
