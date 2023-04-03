@@ -29,21 +29,26 @@ class Sign_xy:
         self.url = "https://{}".format(self.headers["Host"])
         self.sessions = requests.Session()
         self.account = {
-            "username": "",  # 填入你自己的学号
-            "password": ""  # 填入你自己的密码
+            "username": "0122018390620",  # 填入你自己的学号
+            "password": "asdzx324157561"  # 填入你自己的密码
         }
 
     def login(self):
-        if os.path.exists("./authrization.txt"):
-            print("Cookies exists. Try to login by using cookies")
-            with open("./authrization.txt", "r") as f:
+        if os.path.exists("./authorization.txt"):
+            print("Cookies exists. Try to login by using cookies.")
+            with open("./authorization.txt", "r") as f:
                 self.headers["Authorization"] = "Bearer " + f.readline().strip("\n")
             self.sessions.headers.update(self.headers)
             # self.sessions.get("{}/api")
             # self.getUserInfo()
+            result = json.loads(self.getUserInfo().text)
+            if result["code"] != 200:
+                print("Cookies has expired. Sign in automatically.")
+                os.remove("./authorization.txt")
+                return False
 
         else:
-            print("Cookies don't exist. Try to login by username and password")
+            print("Try to login by username and password")
             node = execjs.get()
             with open("./Algorithm.js", encoding="UTF-8") as f:
                 cxk = node.compile(f.read())
@@ -60,23 +65,29 @@ class Sign_xy:
             self.headers["Authorization"] = "Bearer {}".format(token)
             self.sessions.headers.update(self.headers)
             # print(1)
-            userinfo = json.loads(self.getUserInfo().text)
-            realname = userinfo["result"]["realname"]
-            signInfo = userinfo["result"]["sign"]  # 可能是签到信息，暂且留空
-        print("成功登录，欢迎你，{}".format(realname))
+        userinfo = json.loads(self.getUserInfo().text)
+        realname = userinfo["result"]["realname"]
+        signInfo = userinfo["result"]["sign"]  # 可能是签到信息，暂且留空
+        print("Login successfully. Welcome, {}".format(realname))
+        return True
         # for i in group_id["data"]:
             # print(i["id"]) 所有课程id
         # print(1)
 
     def getUserInfo(self):
-        return self.sessions.get("https://{}/api/jw-starcmooc/user/currentUserInfo".format(self.headers["Host"]))
+        return self.sessions.get("https://{}/api/jw-starcmooc/user/currentUserInfo".format(self.headers["Host"]),verify=False)
 
-    def sign(self, register_id):
-        for i in register_id:  # 暂且写为所有课程都签到一遍
-            self.sessions.post("https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
-                "check_type": "1",
-                "register_id": i.strip("\n")
-            }, verify=False)
+    def sign(self):
+        for i in self.getGroup_id():  # 暂且写为所有课程都签到一遍
+            # self.getRegister_id(i)
+            result = self.getRegister_id(i.strip("\n"))
+            if result["data"]["signing_register"] != []:
+                self.sessions.post("https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
+                    "check_type": "1",
+                    "register_id": i.strip("\n")
+                }, verify=False)
+            # else:
+            #     print("此课程不需要签到")
 
     def getRegister_id(self, group_id):
         return json.loads(self.sessions.get(
@@ -88,7 +99,7 @@ class Sign_xy:
             with open("./group_id.txt", "r") as f:
                 result = f.readlines()
         else:
-            result = json.loads(self.sessions.get("https://{}/api/jx-iresource/group/student/groups?time_flag=1".format(self.headers["Host"])).text)["data"]
+            result = json.loads(self.sessions.get("https://{}/api/jx-iresource/group/student/groups?time_flag=1".format(self.headers["Host"]),verify=False).text)["data"]
             tmp = []
             for i in result:
                 tmp.append(i["id"])
@@ -99,5 +110,6 @@ class Sign_xy:
         return result
 
     def run(self):
-        self.login()
-        self.sign(self.getGroup_id())
+        if not self.login():
+            self.login()
+        self.sign()
