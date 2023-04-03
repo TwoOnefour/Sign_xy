@@ -29,8 +29,8 @@ class Sign_xy:
         self.url = "https://{}".format(self.headers["Host"])
         self.sessions = requests.Session()
         self.account = {
-            "username": "0122018390620",  # 填入你自己的学号
-            "password": "asdzx324157561"  # 填入你自己的密码
+            "username": "",  # 填入你自己的学号
+            "password": ""  # 填入你自己的密码
         }
 
     def login(self):
