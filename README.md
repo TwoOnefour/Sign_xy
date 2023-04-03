@@ -4,7 +4,7 @@
 # Configuration
 ## Install Module
 ```
-pip install -r requirement.txt -i https://pypi.tsinghua.edu.cn/simple
+pip install -r requirements.txt -i https://pypi.tsinghua.edu.cn/simple
 ```
 ## Nodejs
 你需要配置nodejs并将其放入系统环境变量中，nodejs请访问[官网](https://nodejs.cn/)下载
