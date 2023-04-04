@@ -19,7 +19,7 @@ username为学号，password为你的明文密码
 ```
 python ./main.py
 ```
-这个指令会在目录下生成一个Authorization.txt的文件用于存放token，并且会生成一个group_ip.txt的文件，作为课程列表缓存，避免反复访问api，然后程序会遍历这些课程一个个签到
+这个指令会在目录下生成一个Authorization.txt的文件用于存放token，同时会生成一个group_ip.txt的文件，group_id.txt作为课程列表缓存，避免反复访问api，然后程序会遍历这些课程一个个签到
 
 建议配合linux的crontab使用，在你经常需要打卡的课的时间段写下crontab命令
 
