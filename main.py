@@ -4,23 +4,40 @@ import sys
 import zipfile
 import os
 import requests
+import platform
+import tarfile
 
 if __name__ == "__main__":
     urllib3.disable_warnings()
     type = None
     tmp = sys.argv
     times = None
-    if not os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/node"):
+    system_ver = platform.system()
+    if system_ver == "Windows":
+        node_path = "/node-v16.19.1-win-x64/node.exe"
+    else:
+        node_path = "/node-v16.19.1-linux-x64/bin/node.exe"
+    if not os.path.exists(os.path.split(os.path.realpath(__file__))[0] + node_path):
         print("第一次运行，正在下载node")
         try:
-            file = requests.get("https://registry.npmmirror.com/-/binary/node/v16.19.1/node-v16.19.1-win-x64.zip")
-            with open(os.path.split(os.path.realpath(__file__))[0] + "/node.zip", "wb") as f:
-                f.write(file.content)
-            print("下载完成")
-            file = zipfile.ZipFile(os.path.split(os.path.realpath(__file__))[0] + "/node.zip")
-            file.extractall(os.path.split(os.path.realpath(__file__))[0])
-            print("解压完成")
-            file.close()
+            if system_ver == "Windows":
+                file = requests.get("https://registry.npmmirror.com/-/binary/node/v16.19.1/node-v16.19.1-win-x64.zip")
+                with open(os.path.split(os.path.realpath(__file__))[0] + "/node.zip", "wb") as f:
+                    f.write(file.content)
+                print("下载完成")
+                file = zipfile.ZipFile(os.path.split(os.path.realpath(__file__))[0] + "/node.zip")
+                file.extractall(os.path.split(os.path.realpath(__file__))[0])
+                print("解压完成")
+                file.close()
+            elif system_ver == "Linux":
+                file = requests.get("https://registry.npmmirror.com/-/binary/node/v16.19.1/node-v16.19.1-linux-x64.tar.gz")
+                with open(os.path.split(os.path.realpath(__file__))[0] + "/node.tar.gz", "wb") as f:
+                    f.write(file.content)
+                print("下载完成")
+                file = tarfile.open(os.path.split(os.path.realpath(__file__))[0] + "/node.tar.gz")
+                file.extractall(os.path.split(os.path.realpath(__file__))[0])
+                print("解压完成")
+                file.close()
         except Exception as e:
             print("下载失败")
             sys.exit(0)
@@ -39,4 +56,5 @@ if __name__ == "__main__":
     mybot = Sign_xy()
     mybot.type = type
     mybot.times = times
+    mybot.node_path = node_path
     mybot.run()
