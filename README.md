@@ -7,7 +7,7 @@
 pip install -r requirements.txt -i https://pypi.tsinghua.edu.cn/simple
 ```
 ## Nodejs
-你需要配置nodejs并将其放入系统环境变量中，nodejs请访问[官网](https://nodejs.cn/)下载
+程序自动下载node，无需配置
 
 ## Modify username and password
 第一次登录的时候你需要输入你的账号密码，之后会保存到本地目录
