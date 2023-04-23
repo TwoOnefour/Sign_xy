@@ -1,13 +1,29 @@
 import urllib3
 from __init__ import Sign_xy
 import sys
-
+import zipfile
+import os
+import requests
 
 if __name__ == "__main__":
     urllib3.disable_warnings()
     type = None
     tmp = sys.argv
     times = None
+    if not os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/node"):
+        print("第一次运行，正在下载node")
+        try:
+            file = requests.get("https://registry.npmmirror.com/-/binary/node/v16.19.1/node-v16.19.1-win-x64.zip")
+            with open(os.path.split(os.path.realpath(__file__))[0] + "/node.zip", "wb") as f:
+                f.write(file.content)
+            print("下载完成")
+            file = zipfile.ZipFile(os.path.split(os.path.realpath(__file__))[0] + "/node.zip")
+            file.extractall(os.path.split(os.path.realpath(__file__))[0])
+            print("解压完成")
+            file.close()
+        except Exception as e:
+            print("下载失败")
+            sys.exit(0)
     if len(tmp) == 1 or tmp[1] == "-h":
         print("用法：\npython3 main.py -s\t\t签到,如果后面跟数字，那么会每隔1分钟签到一次，持续你给定的次数停止\npython3 main.py -f\t\t刷视频或者音频等作业\npython3 main.py -h\t\t返回此帮助")
     elif sys.argv[1].strip(" ") == "-s":
