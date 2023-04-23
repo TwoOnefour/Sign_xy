@@ -10,16 +10,16 @@ pip install -r requirements.txt -i https://pypi.tsinghua.edu.cn/simple
 你需要配置nodejs并将其放入系统环境变量中，nodejs请访问[官网](https://nodejs.cn/)下载
 
 ## Modify username and password
-你需要在__init__中修改username和password
+第一次登录的时候你需要输入你的账号密码，之后会保存到本地目录
 
-![图片](https://user-images.githubusercontent.com/77989499/229537712-9fc2ff19-7f53-4e32-92fd-018666ec2639.png)
-
-username为学号，password为你的明文密码
+username为学号，password为你的明文密码，目前实现的是统一门户登录
 # Usage
 ```
-python ./main.py
+python ./main.py -s 签到，如果后面跟着数字n，那么将会持续n次，间隔60秒签到
+python ./main.py -t 刷课
+python ./main.py -h 帮助
 ```
-这个指令会在目录下生成一个Authorization.txt的文件用于存放token，同时会生成一个group_ip.txt的文件，group_id.txt作为课程列表缓存，避免反复访问api，然后程序会遍历这些课程一个个签到
+这个程序会在目录下生成一个Authorization.txt的文件用于存放token，同时会生成一个group_ip.txt的文件，group_id.txt作为课程列表缓存，避免反复访问api，然后程序会遍历这些课程一个个签到
 
 建议配合linux的crontab使用，在你经常需要打卡的课的时间段写下crontab命令
 
