@@ -16,7 +16,7 @@ if __name__ == "__main__":
     if system_ver == "Windows":
         node_path = "/node-v16.19.1-win-x64/node.exe"
     else:
-        node_path = "/node-v16.19.1-linux-x64/bin/node.exe"
+        node_path = "/node-v16.19.1-linux-x64/bin/node"
     if not os.path.exists(os.path.split(os.path.realpath(__file__))[0] + node_path):
         print("第一次运行，正在下载node")
         try:
