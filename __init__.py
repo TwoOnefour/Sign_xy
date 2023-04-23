@@ -12,6 +12,8 @@ class Sign_xy:
         self.webdriver = None
         self.times = None
         self.authorization = ""
+        # self.sys = None
+        self.node_path = None
         self.headers = {
             "schoolcertify":"10497", # 学校对应代码
             "Host":"ccnu.ai-augmented.com",
@@ -55,7 +57,7 @@ class Sign_xy:
                 encoding='UTF-8',
                 runner_source=_runner_sources.Node
             )
-            local_node_runtime._binary_cache = [os.path.split(os.path.realpath(__file__))[0] + '/node-v16.19.1-win-x64/node.exe']
+            local_node_runtime._binary_cache = [os.path.split(os.path.realpath(__file__))[0] + self.node_path]
             local_node_runtime._available = True
             execjs.register('local_node', local_node_runtime)
             with open(os.path.split(os.path.realpath(__file__))[0] + "/Algorithm.js", encoding="UTF-8") as f:
