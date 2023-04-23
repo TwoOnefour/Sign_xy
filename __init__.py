@@ -3,7 +3,7 @@ import os
 import execjs
 import json
 import time
-
+import execjs._runner_sources as _runner_sources
 
 class Sign_xy:
     def __init__(self):
@@ -34,9 +34,9 @@ class Sign_xy:
         }
 
     def login(self):
-        if os.path.exists("./authorization.txt"):
+        if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt"):
             print("Cookies exists. Try to login by using cookies.")
-            with open("./authorization.txt", "r") as f:
+            with open(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt", "r") as f:
                 self.headers["Authorization"] = "Bearer " + f.readline().strip("\n")
             self.sessions.headers.update(self.headers)
             # self.sessions.get("{}/api")
@@ -49,9 +49,18 @@ class Sign_xy:
 
         else:
             print("Try to login by username and password")
-            node = execjs.get()
-            with open("./Algorithm.js", encoding="UTF-8") as f:
-                cxk = node.compile(f.read())
+            local_node_runtime = execjs.ExternalRuntime(
+                name="Node.js (V8) local",
+                command='',
+                encoding='UTF-8',
+                runner_source=_runner_sources.Node
+            )
+            local_node_runtime._binary_cache = [os.path.split(os.path.realpath(__file__))[0] + '/node-v16.19.1-win-x64/node.exe']
+            local_node_runtime._available = True
+            execjs.register('local_node', local_node_runtime)
+            with open(os.path.split(os.path.realpath(__file__))[0] + "/Algorithm.js", encoding="UTF-8") as f:
+                # cxk = node.compile(f.read())
+                cxk = execjs.get('local_node').compile(f.read())
             funName = "crack"
             password = cxk.call(funName, self.account["password"])
             # self.headers.pop("Authorization")
@@ -60,7 +69,7 @@ class Sign_xy:
                 "loginName":self.account["username"]
             },headers=self.headers)
             token = json.loads(result.text)["result"]["token"]
-            with open("./authorization.txt", "w") as f:
+            with open(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt", "w") as f:
                 f.write(token)
             self.headers["Authorization"] = "Bearer {}".format(token)
             self.sessions.headers.update(self.headers)
@@ -94,11 +103,14 @@ class Sign_xy:
                     result1 = json.loads(result1.text)
                     if result1["code"] == 0:
                         print("{}   {}签到成功".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"]))
+                        return
                     elif result1["code"] == 50011:
                         print("{}   {}已经签到过了".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"]))
+                        return
                     else:
                         print("{}   {}{}".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"],
                                                  result1["message"]))
+                        return
             time.sleep(60)  # 不建议改动
 
             # else:
@@ -147,15 +159,15 @@ class Sign_xy:
             print(str(type(e)) + ":" + str(e))
 
     def getGroup_id(self):
-        if os.path.exists("./group_id.txt"):
-            with open("./group_id.txt", "r") as f:
+        if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/group_id.txt"):
+            with open(os.path.split(os.path.realpath(__file__))[0] + "/group_id.txt", "r") as f:
                 result = f.readlines()
         else:
             result = json.loads(self.sessions.get("https://{}/api/jx-iresource/group/student/groups?time_flag=1".format(self.headers["Host"]),verify=False).text)["data"]
             tmp = []
             for i in result:
                 tmp.append(i["id"])
-            with open("./group_id.txt", "w") as f:
+            with open(os.path.split(os.path.realpath(__file__))[0] + "/group_id.txt", "w") as f:
                 f.write("\n".join(tmp))
             return tmp
         # if os.path.exists("./group_id.txt"):
