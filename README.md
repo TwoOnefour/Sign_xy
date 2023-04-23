@@ -21,7 +21,7 @@ python ./main.py -s 签到，如果后面跟着数字n，那么将会持续n次�
 python ./main.py -t 刷课
 python ./main.py -h 帮助
 ```
-这个程序会在目录下生成一个Authorization.txt的文件用于存放token，同时会生成一个group_ip.txt的文件，group_id.txt作为课程列表缓存，避免反复访问api，然后程序会遍历这些课程一个个签到
+这个程序会在目录下生成一个Authorization.txt的文件用于存放token，同时会生成一个group_id.txt的文件，group_id.txt作为课程列表缓存，避免反复访问api，然后程序会遍历这些课程一个个签到
 
 建议配合linux的crontab使用，在你经常需要打卡的课的时间段写下crontab命令
 
