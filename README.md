@@ -1,6 +1,8 @@
 # Description
 这是一个小雅签到的python程序，分析了一天js，复现了登陆的密码加密，并且能实现简单的签到功能，目前手上只有武理的号，所以没办法做其他学校的
 
+如果觉得好用请点一个免费的star，这对我真的很重要
+
 # Configuration
 ## Install Module
 ```
