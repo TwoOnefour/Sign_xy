@@ -1,10 +1,10 @@
 import requests
 import os
-import execjs
 import json
 import time
-import execjs._runner_sources as _runner_sources
 import datetime
+from Crypto.Cipher import DES
+import base64
 
 
 class Sign_xy:
@@ -17,7 +17,7 @@ class Sign_xy:
         # self.sys = None
         self.node_path = None
         self.headers = {
-            "schoolcertify":"10497", # 学校对应代码
+            "schoolcertify":"", # 学校对应代码
             "Host":"ccnu.ai-augmented.com",
             "Content-Type":"application/json; charset=utf-8",
             "access-control-allow-methods":"GET,POST,OPTIONS",
@@ -37,6 +37,14 @@ class Sign_xy:
             "password": ""
         }
 
+    def encrypt(self, data):
+        bs = 8
+        password = "bbd92272a179a2db46ee01aed4df8cda".encode("utf-8")[:8]
+        iv = "12345678".encode("utf-8")
+        pad = lambda s: s + (bs - len(s) % bs) * chr(bs - len(s) % bs)
+        cipher = DES.new(password, DES.MODE_CBC, iv)
+        return base64.b64encode(cipher.encrypt(pad(data).encode())).decode("utf-8")
+
     def login(self):
         if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt"):
             print("Cookies exists. Try to login by using cookies.")
@@ -53,21 +61,18 @@ class Sign_xy:
 
         else:
             print("Try to login by username and password")
-            local_node_runtime = execjs.ExternalRuntime(
-                name="Node.js (V8) local",
-                command='',
-                encoding='UTF-8',
-                runner_source=_runner_sources.Node
-            )
-            local_node_runtime._binary_cache = [os.path.split(os.path.realpath(__file__))[0] + self.node_path]
-            local_node_runtime._available = True
-            execjs.register('local_node', local_node_runtime)
-            with open(os.path.split(os.path.realpath(__file__))[0] + "/Algorithm.js", encoding="UTF-8") as f:
-                # cxk = node.compile(f.read())
-                cxk = execjs.get('local_node').compile(f.read())
-            funName = "crack"
-            password = cxk.call(funName, self.account["password"])
-            # self.headers.pop("Authorization")
+            if self.headers["schoolcertify"] == "":
+                while True:
+                    self.headers["schoolcertify"] = input("输入登录学校，1为华师，2为武理：")
+                    if self.headers["schoolcertify"] == "1":
+                        self.headers["schoolcertify"] = "10511"
+                    elif self.headers["schoolcertify"] == "2":
+                        self.headers["schoolcertify"] = "10497"
+                    else:
+                        print("输入错误，请重新输入")
+                        continue
+                    break
+            password = self.encrypt(self.account["password"])
             result = self.sessions.post("https://{}/api/jw-starcmooc/user/unifiedCheckLogin".format(self.headers["Host"]), verify=False, json={
                 "password":password,
                 "loginName":self.account["username"]
@@ -82,6 +87,8 @@ class Sign_xy:
         realname = userinfo["result"]["realname"]
         signInfo = userinfo["result"]["sign"]  # 可能是签到信息，暂且留空
         print("Login successfully. Welcome, {}".format(realname))
+        with open(os.path.split(os.path.realpath(__file__))[0] + "/account.txt", "w") as f:
+            f.write(self.account["username"] + "\n" + self.account["password"] + "\n" + self.headers["schoolcertify"] + "\n")
         return True
         # for i in group_id["data"]:
             # print(i["id"]) 所有课程id
@@ -186,12 +193,12 @@ class Sign_xy:
                     account_list = f.readlines()
                     self.account["username"] = account_list[0].strip("\n").strip(" ")
                     self.account["password"] = account_list[1].strip("\n").strip(" ")
+                    self.headers["schoolcertify"] = account_list[2].strip("\n").strip(" ")
             else:
                 print("请填入账号密码。注意：账号密码为你统一身份认证的账号密码")
                 self.account["username"] = input("学号：")
                 self.account["password"] = input("密码：")
-                with open(os.path.split(os.path.realpath(__file__))[0] + "/account.txt", "w") as f:
-                    f.write(self.account["username"] + "\n" + self.account["password"] + "\n")
+
         if not self.login():
             self.login()
         if self.type == "刷课":
