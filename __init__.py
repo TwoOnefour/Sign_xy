@@ -4,6 +4,8 @@ import execjs
 import json
 import time
 import execjs._runner_sources as _runner_sources
+import datetime
+
 
 class Sign_xy:
     def __init__(self):
@@ -69,7 +71,7 @@ class Sign_xy:
             result = self.sessions.post("https://{}/api/jw-starcmooc/user/unifiedCheckLogin".format(self.headers["Host"]), verify=False, json={
                 "password":password,
                 "loginName":self.account["username"]
-            },headers=self.headers)
+            }, headers=self.headers)
             token = json.loads(result.text)["result"]["token"]
             with open(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt", "w") as f:
                 f.write(token)
