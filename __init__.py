@@ -17,18 +17,18 @@ class Sign_xy:
         # self.sys = None
         self.node_path = None
         self.headers = {
-            "schoolcertify":"", # 学校对应代码
-            "Host":"ccnu.ai-augmented.com",
-            "Content-Type":"application/json; charset=utf-8",
-            "access-control-allow-methods":"GET,POST,OPTIONS",
-            "Accept-Encoding":"gzip, deflate, br",
-            "Connection":"keep-alive",
-            "If-None-Match":"W/47-Gkgd+hPnYQ+HOAd1+Mgij152K58",
-            "Accept":"*/*",
-            "User-Agent":"xiaoya_mobile",
-            "Authorization":self.authorization,
-            "Accept-Language":"en-US,en;q=0.9",
-            "Access-Control-Allow-Origin":"*",
+            "schoolcertify": "",  # 学校对应代码
+            "Host": "ccnu.ai-augmented.com",
+            "Content-Type": "application/json; charset=utf-8",
+            "access-control-allow-methods": "GET,POST,OPTIONS",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "If-None-Match": "W/47-Gkgd+hPnYQ+HOAd1+Mgij152K58",
+            "Accept": "*/*",
+            "User-Agent": "xiaoya_mobile",
+            "Authorization": self.authorization,
+            "Accept-Language": "en-US,en;q=0.9",
+            "Access-Control-Allow-Origin": "*",
         }
         self.url = "https://{}".format(self.headers["Host"])
         self.sessions = requests.Session()
@@ -73,10 +73,11 @@ class Sign_xy:
                         continue
                     break
             password = self.encrypt(self.account["password"])
-            result = self.sessions.post("https://{}/api/jw-starcmooc/user/unifiedCheckLogin".format(self.headers["Host"]), verify=False, json={
-                "password":password,
-                "loginName":self.account["username"]
-            }, headers=self.headers)
+            result = self.sessions.post(
+                "https://{}/api/jw-starcmooc/user/unifiedCheckLogin".format(self.headers["Host"]), verify=False, json={
+                    "password": password,
+                    "loginName": self.account["username"]
+                }, headers=self.headers)
             token = json.loads(result.text)["result"]["token"]
             with open(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt", "w") as f:
                 f.write(token)
@@ -88,14 +89,16 @@ class Sign_xy:
         signInfo = userinfo["result"]["sign"]  # 可能是签到信息，暂且留空
         print("Login successfully. Welcome, {}".format(realname))
         with open(os.path.split(os.path.realpath(__file__))[0] + "/account.txt", "w") as f:
-            f.write(self.account["username"] + "\n" + self.account["password"] + "\n" + self.headers["schoolcertify"] + "\n")
+            f.write(self.account["username"] + "\n" + self.account["password"] + "\n" + self.headers[
+                "schoolcertify"] + "\n")
         return True
         # for i in group_id["data"]:
-            # print(i["id"]) 所有课程id
+        # print(i["id"]) 所有课程id
         # print(1)
 
     def getUserInfo(self):
-        return self.sessions.get("https://{}/api/jw-starcmooc/user/currentUserInfo".format(self.headers["Host"]),verify=False)
+        return self.sessions.get("https://{}/api/jw-starcmooc/user/currentUserInfo".format(self.headers["Host"]),
+                                 verify=False)
 
     def sign(self):
         if not self.times:
@@ -104,13 +107,29 @@ class Sign_xy:
             self.times = int(self.times)
         for times in range(self.times):
             for i in self.getGroup_id():  # 暂且写为所有课程都签到一遍
+                # self.get_open_course(i.strip("\n"))["data"]
                 # self.getRegister_id(i)
                 result = self.getRegister_id(i.strip("\n"))
                 if result["data"]["signing_register"] != []:
-                    result1 = self.sessions.post("https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
-                        "check_type": "1",
-                        "register_id": i.strip("\n")
-                    }, verify=False)
+                    # if result["data"]["is_allow_code"] == 2:
+                    #     # '''group_id: n,
+                    #     # register_id: r,
+                    #     # course_id: o'''
+                    #     result1 = self.sessions.post(
+                    #         "https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
+                    #             "check_type": "1",
+                    #             "register_id": result["data"]["id"],
+                    #             "course_id": result["data"]["course_id"],
+                    #             "group_id": result["data"]["group_id"]
+                    #         }, verify=False)
+                    #     continue
+                    result1 = self.sessions.post(
+                        "https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
+                            "check_type": "1",
+                            "register_id": result["data"]["id"],
+                            "course_id": result["data"]["course_id"],
+                            "group_id": result["data"]["group_id"]
+                        }, verify=False)
                     result1 = json.loads(result1.text)
                     if result1["code"] == 0:
                         print("{}   {}签到成功".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"]))
@@ -130,7 +149,8 @@ class Sign_xy:
     def getRegister_id(self, group_id):
         return json.loads(self.sessions.get(
             "https://{}/api/jx-iresource/course/getOpenCourse?group_id={}&is_in_course=2".format(self.headers["Host"],
-                group_id), verify=False).text)
+                                                                                                 group_id),
+            verify=False).text)
 
     def get_tasks(self, group_id):
         result = self.sessions.get("https://ccnu.ai-augmented.com/api/jx-stat/group/task/queryTaskNotices", params={
@@ -158,29 +178,40 @@ class Sign_xy:
                         #     result = json.loads(result.text)
                         # result = result["data"]
                         # watched_duration = max(0, float(result["duration"]) - float(result["watched_duration"]) + 1)
-                        self.sessions.post("https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]), json={
-                            "media_type": 1,  # 类型为录音, 可以乱填
-                            "duration": 100,  # 总时间，建议200-300
-                            "played": 1,  # 播放次数
-                            "watched_duration": 200  # 已经看过的时长
-                        })
-                        result = self.sessions.post("https://ccnu.ai-augmented.com/api/jx-iresource/vod/checkTaskStatus", json={
-                            "task_id": i["task_id"],
-                            "media_id": i["quote_id"],
-                            "assign_id": i["assign_id"],
-                            "group_id": i["group_id"]
-                        })
+                        self.sessions.post(
+                            "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
+                            json={
+                                "media_type": 1,  # 类型为录音, 可以乱填
+                                "duration": 100,  # 总时间，建议200-300
+                                "played": 1,  # 播放次数
+                                "watched_duration": 200  # 已经看过的时长
+                            })
+                        result = self.sessions.post(
+                            "https://ccnu.ai-augmented.com/api/jx-iresource/vod/checkTaskStatus", json={
+                                "task_id": i["task_id"],
+                                "media_id": i["quote_id"],
+                                "assign_id": i["assign_id"],
+                                "group_id": i["group_id"]
+                            })
                         count += 1
             print(f"完成了{count}个作业")
         except Exception as e:
             print(str(type(e)) + ":" + str(e))
+
+    def get_open_course(self, group_id):
+        result = self.sessions.get(f'https://{self.headers["Host"]}/api/jx-iresource/course/getOpenCourse', params={
+            "group_id": group_id,
+        })
+        return result.json()
 
     def getGroup_id(self):
         if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/group_id.txt"):
             with open(os.path.split(os.path.realpath(__file__))[0] + "/group_id.txt", "r") as f:
                 result = f.readlines()
         else:
-            result = json.loads(self.sessions.get("https://{}/api/jx-iresource/group/student/groups?time_flag=1".format(self.headers["Host"]),verify=False).text)["data"]
+            result = json.loads(self.sessions.get(
+                "https://{}/api/jx-iresource/group/student/groups?time_flag=1".format(self.headers["Host"]),
+                verify=False).text)["data"]
             tmp = []
             for i in result:
                 tmp.append(i["id"])
@@ -208,6 +239,6 @@ class Sign_xy:
         if not self.login():
             self.login()
         if self.type == "刷课":
-            self.finish_media()   # 自动刷课，刷视频接口
+            self.finish_media()  # 自动刷课，刷视频接口
         elif self.type == "签到":
             self.sign()
