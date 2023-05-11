@@ -125,10 +125,10 @@ class Sign_xy:
                     #     continue
                     result1 = self.sessions.post(
                         "https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
-                            "check_type": "1",
+                            "code": "",
                             "register_id": result["data"]["id"],
-                            "course_id": result["data"]["course_id"],
-                            "group_id": result["data"]["group_id"]
+                            "qrtype": "SIGNIN",
+                            "r": ""
                         }, verify=False)
                     result1 = json.loads(result1.text)
                     if result1["code"] == 0:
