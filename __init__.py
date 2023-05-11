@@ -55,6 +55,37 @@ class Sign_xy:
         cipher = DES.new(password, DES.MODE_CBC, iv)
         return base64.b64encode(cipher.encrypt(pad(data).encode())).decode("utf-8")
 
+    def whut_login(self, service, username, password):
+        self.sessions.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
+        })
+        html = self.sessions.get("http://zhlgd.whut.edu.cn/tpass/login", params={
+            "service": service
+        })
+        etree.HTMLParser(encoding="utf-8")
+        # tree = etree.parse(local_file_path)
+        tree = etree.HTML(html._content.decode("utf-8"))
+        tpass = dict(tree.xpath('//*[@id="lt"]')[0].attrib)["value"]
+        des = strEnc(self.account["username"] + self.account["password"] + tpass, "1", "2", "3")
+        self.sessions.headers.update({})
+        self.sessions.cookies.set(domain="whut.edu.cn", path="/", name="cas_hash", value="")
+        # print(tpass)
+        result = self.sessions.post(
+            url="http://zhlgd.whut.edu.cn/tpass/login",
+            params={
+                "service": service
+            },
+            data={
+                "rsa": des,
+                "ul": len(username),
+                "pl": len(password),
+                "lt": tpass,
+                "execution": "e1s1",
+                "_eventId": "submit",
+            }, verify=False, allow_redirects=False)
+        if result.headers.get("location") is None:
+            return False
+        return result.headers["location"]
     def login(self):
         if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt"):
             print("Cookies exists. Try to login by using cookies.")
@@ -93,36 +124,8 @@ class Sign_xy:
                     self.account["password"] = input("密码：")
             if self.pattern == "1":
                 self.sessions.cookies.clear()
-                html = self.sessions.get(
-                    r"http://zhlgd.whut.edu.cn/tpass/login?service=https%3A%2F%2Fwhut.ai-augmented.com%2Fapi%2Fjw-starcmooc%2Fuser%2Fcas%2Flogin%3FschoolCertify%3D10497",
-                    headers={
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
-                        "Cookie": "hb_MA-B701-2FC93ACD9328_source=entryhz.qiye.163.com; Language=zh_CN; JSESSIONID=UIQJNMWds64gt1hccf1lGXJLKySUlqrAbnVV0gztR4WMDXsSosPM!961329578"
-                    })
-                etree.HTMLParser(encoding="utf-8")
-                # tree = etree.parse(local_file_path)
-                tree = etree.HTML(html._content.decode("utf-8"))
-                tpass = dict(tree.xpath('//*[@id="lt"]')[0].attrib)["value"]
-                des = strEnc(self.account["username"] + self.account["password"] + tpass, "1", "2", "3")
-                self.sessions.headers.update({})
-
-                self.sessions.cookies.set(domain="whut.edu.cn", path="/", name="cas_hash", value="")
-                # print(tpass)
-                result = self.sessions.post(
-                    r"http://zhlgd.whut.edu.cn/tpass/login?service=https%3A%2F%2Fwhut.ai-augmented.com%2Fapi%2Fjw-starcmooc%2Fuser%2Fcas%2Flogin%3FschoolCertify%3D10497",
-                    data={
-                        "rsa": des,
-                        "ul": len(self.account["username"]),
-                        "pl": len(self.account["password"]),
-                        "lt": tpass,
-                        "execution": "e1s1",
-                        "_eventId": "submit",
-                    }, headers={
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35"
-                    }, verify=False, allow_redirects=False)
-                if result.headers.get("location") is None:
-                    return False
-                result1 = self.sessions.get(result.headers["location"], verify=False)
+                url = self.whut_login("https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497", self.account["username"], self.account["password"])
+                result1 = self.sessions.get(url, verify=False)
                 self.headers["Authorization"] = f'Bearer {self.sessions.cookies.get("HS-prd-access-token")}'
                 self.sessions.headers.update(self.headers)
                 self.login_success()
