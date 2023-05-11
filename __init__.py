@@ -183,8 +183,9 @@ class Sign_xy:
                 # self.get_open_course(i.strip("\n"))["data"]
                 # self.getRegister_id(i)
                 result = self.getRegister_id(i.strip("\n"))
-                print(result)
+
                 if result["data"]["signing_register"]:
+                    print(result)
                     result1 = self.sessions.post(
                         "https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
                             "code": "",
