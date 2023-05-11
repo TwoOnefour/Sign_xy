@@ -5,17 +5,19 @@ import time
 import datetime
 from Crypto.Cipher import DES
 import base64
-
-
+from lxml import etree
+from enc import *
 class Sign_xy:
     def __init__(self):
         # urllib3.disable_warnings()
+        self.server_chan_apikey = ""
         self.type = None
         self.webdriver = None
         self.times = None
         self.authorization = ""
         # self.sys = None
         self.node_path = None
+        self.relogin = False
         self.headers = {
             "schoolcertify": "",  # 学校对应代码
             "Host": "ccnu.ai-augmented.com",
@@ -36,6 +38,14 @@ class Sign_xy:
             "username": "",
             "password": ""
         }
+        self.pattern = ""
+        if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/account.txt"):
+            with open(os.path.split(os.path.realpath(__file__))[0] + "/account.txt", "r") as f:
+                account_list = f.readlines()
+                self.account["username"] = account_list[0].strip("\n").strip(" ")
+                self.account["password"] = account_list[1].strip("\n").strip(" ")
+                self.headers["schoolcertify"] = account_list[2].strip("\n").strip(" ")
+                self.pattern = account_list[3].strip("\n").strip(" ")
 
     def encrypt(self, data):
         bs = 8
@@ -49,15 +59,17 @@ class Sign_xy:
         if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt"):
             print("Cookies exists. Try to login by using cookies.")
             with open(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt", "r") as f:
-                self.headers["Authorization"] = "Bearer " + f.readline().strip("\n")
+                self.headers["Authorization"] = f.readline().strip("\n")
             self.sessions.headers.update(self.headers)
             # self.sessions.get("{}/api")
             # self.getUserInfo()
             result = json.loads(self.getUserInfo().text)
             if result["code"] != 200:
                 print("Cookies has expired. Sign in automatically.")
+                self.relogin = True
                 os.remove("./authorization.txt")
                 return False
+            self.login_success()
 
         else:
             print("Try to login by username and password")
@@ -66,63 +78,122 @@ class Sign_xy:
                     self.headers["schoolcertify"] = input("输入登录学校，1为华师，2为武理：")
                     if self.headers["schoolcertify"] == "1":
                         self.headers["schoolcertify"] = "10511"
+                        self.pattern = "2"
                     elif self.headers["schoolcertify"] == "2":
                         self.headers["schoolcertify"] = "10497"
                     else:
                         print("输入错误，请重新输入")
                         continue
                     break
+            if self.headers["schoolcertify"] == "10497" and not self.relogin and self.pattern == "":
+                self.pattern = input("输入登录方式，1为门户登录（门户登录不会挤掉客户端，推荐，如果是门户登录将永久签到），2为小雅直接登录：")
+            if self.account["username"] == "" or self.account["password"] == "":
+                    print("请填入账号密码。注意：账号密码为你统一身份认证的账号密码")
+                    self.account["username"] = input("学号：")
+                    self.account["password"] = input("密码：")
+            if self.pattern == "1":
+                self.sessions.cookies.clear()
+                html = self.sessions.get(
+                    r"http://zhlgd.whut.edu.cn/tpass/login?service=https%3A%2F%2Fwhut.ai-augmented.com%2Fapi%2Fjw-starcmooc%2Fuser%2Fcas%2Flogin%3FschoolCertify%3D10497",
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
+                        "Cookie": "hb_MA-B701-2FC93ACD9328_source=entryhz.qiye.163.com; Language=zh_CN; JSESSIONID=UIQJNMWds64gt1hccf1lGXJLKySUlqrAbnVV0gztR4WMDXsSosPM!961329578"
+                    })
+                etree.HTMLParser(encoding="utf-8")
+                # tree = etree.parse(local_file_path)
+                tree = etree.HTML(html._content.decode("utf-8"))
+                tpass = dict(tree.xpath('//*[@id="lt"]')[0].attrib)["value"]
+                des = strEnc(self.account["username"] + self.account["password"] + tpass, "1", "2", "3")
+                self.sessions.headers.update({})
+
+                self.sessions.cookies.set(domain="whut.edu.cn", path="/", name="cas_hash", value="")
+                # print(tpass)
+                result = self.sessions.post(
+                    r"http://zhlgd.whut.edu.cn/tpass/login?service=https%3A%2F%2Fwhut.ai-augmented.com%2Fapi%2Fjw-starcmooc%2Fuser%2Fcas%2Flogin%3FschoolCertify%3D10497",
+                    data={
+                        "rsa": des,
+                        "ul": len(self.account["username"]),
+                        "pl": len(self.account["password"]),
+                        "lt": tpass,
+                        "execution": "e1s1",
+                        "_eventId": "submit",
+                    }, headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35"
+                    }, verify=False, allow_redirects=False)
+                if result.headers.get("location") is None:
+                    return False
+                result1 = self.sessions.get(result.headers["location"], verify=False)
+                self.headers["Authorization"] = f'Bearer {self.sessions.cookies.get("HS-prd-access-token")}'
+                self.sessions.headers.update(self.headers)
+                self.login_success()
+                return True
             password = self.encrypt(self.account["password"])
+            self.sessions.headers.update(self.headers)
             result = self.sessions.post(
                 "https://{}/api/jw-starcmooc/user/unifiedCheckLogin".format(self.headers["Host"]), verify=False, json={
                     "password": password,
                     "loginName": self.account["username"]
                 }, headers=self.headers)
+            if result.json().get("result") is None:
+                return False
             token = json.loads(result.text)["result"]["token"]
-            with open(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt", "w") as f:
-                f.write(token)
             self.headers["Authorization"] = "Bearer {}".format(token)
             self.sessions.headers.update(self.headers)
-            # print(1)
+            self.login_success()
+        return True
+
+    def login_success(self):
+        with open(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt", "w") as f:
+            f.write(self.headers["Authorization"])
         userinfo = json.loads(self.getUserInfo().text)
         realname = userinfo["result"]["realname"]
-        signInfo = userinfo["result"]["sign"]  # 可能是签到信息，暂且留空
+        # signInfo = userinfo["result"]["sign"]  # 可能是签到信息，暂且留空,不用留空，证明为不存在
         print("Login successfully. Welcome, {}".format(realname))
+        self.relogin = False
+        if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/account.txt"):
+            return
         with open(os.path.split(os.path.realpath(__file__))[0] + "/account.txt", "w") as f:
             f.write(self.account["username"] + "\n" + self.account["password"] + "\n" + self.headers[
-                "schoolcertify"] + "\n")
-        return True
-        # for i in group_id["data"]:
-        # print(i["id"]) 所有课程id
-        # print(1)
+                "schoolcertify"] + "\n" + self.pattern + "\n")
 
     def getUserInfo(self):
         return self.sessions.get("https://{}/api/jw-starcmooc/user/currentUserInfo".format(self.headers["Host"]),
                                  verify=False)
-
+    def get_cookie_status(self):
+        if self.getUserInfo().json()["code"] == 401:
+            try:
+                print("Cookies has expired. Sign in automatically.")
+                os.remove("./authorization.txt")
+                self.relogin = True
+            except Exception as e:
+                print(e)
+            while True:
+                if self.login():
+                    break
     def sign(self):
         if not self.times:
             self.times = 1
         else:
             self.times = int(self.times)
         for times in range(self.times):
+            if self.pattern == "1":
+                self.times += 1  # 永久运行
+            self.get_cookie_status()
             for i in self.getGroup_id():  # 暂且写为所有课程都签到一遍
                 # self.get_open_course(i.strip("\n"))["data"]
                 # self.getRegister_id(i)
                 result = self.getRegister_id(i.strip("\n"))
-                if result["data"]["signing_register"] != []:
-                    # if result["data"]["is_allow_code"] == 2:
-                    #     # '''group_id: n,
-                    #     # register_id: r,
-                    #     # course_id: o'''
-                    #     result1 = self.sessions.post(
-                    #         "https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
-                    #             "check_type": "1",
-                    #             "register_id": result["data"]["id"],
-                    #             "course_id": result["data"]["course_id"],
-                    #             "group_id": result["data"]["group_id"]
-                    #         }, verify=False)
-                    #     continue
+                print(result)
+                if result["data"]["signing_register"]:
+                    result1 = self.sessions.post(
+                        "https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
+                            "code": "",
+                            "register_id": result["data"]["signing_register"][0]["id"],
+                            "qrtype": "SIGNIN",
+                            "r": ""
+                        }, verify=False)
+                    result1 = json.loads(result1.text)
+                    print(result1)
                     result1 = self.sessions.post(
                         "https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
                             "code": "",
@@ -131,15 +202,17 @@ class Sign_xy:
                             "r": ""
                         }, verify=False)
                     result1 = json.loads(result1.text)
+                    print(result1)
                     if result1["code"] == 0:
-                        print("{}   {}签到成功".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"]))
-                        return
+                        msg = "{}   {}签到成功".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"])
                     elif result1["code"] == 50011:
-                        print("{}   {}已经签到过了".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"]))
-                        return
+                        msg = "{}   {}已经签到过了".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"])
                     else:
-                        print("{}   {}{}".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"],
-                                                 result1["message"]))
+                        msg = "{}   {}{}".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"],
+                                                 result1["message"])
+                    print(msg)
+                    requests.get(f"https://sctapi.ftqq.com/SCT186661TSyCvsm2MeOIFJBGtqx7ptmWn.send?title={msg}")
+                    if self.pattern != "1":
                         return
             time.sleep(60)  # 不建议改动
 
@@ -224,20 +297,13 @@ class Sign_xy:
     def run(self):
         if not self.type:
             return
-        if self.account["username"] == "" or self.account["password"] == "":
-            if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/account.txt"):
-                with open(os.path.split(os.path.realpath(__file__))[0] + "/account.txt", "r") as f:
-                    account_list = f.readlines()
-                    self.account["username"] = account_list[0].strip("\n").strip(" ")
-                    self.account["password"] = account_list[1].strip("\n").strip(" ")
-                    self.headers["schoolcertify"] = account_list[2].strip("\n").strip(" ")
-            else:
-                print("请填入账号密码。注意：账号密码为你统一身份认证的账号密码")
-                self.account["username"] = input("学号：")
-                self.account["password"] = input("密码：")
+        while True:
+            if self.login():
+                break
+            if not self.relogin:
+                print("登陆失败，请确认登陆模式和账号密码")
+                self.account["username"] = ""
 
-        if not self.login():
-            self.login()
         if self.type == "刷课":
             self.finish_media()  # 自动刷课，刷视频接口
         elif self.type == "签到":
