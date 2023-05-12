@@ -40,5 +40,7 @@ url = example.whut_login("http://zhlgd.whut.edu.cn/tp_up/", username, password)
 print(url) # "http://zhlgd.whut.edu.cn/tp_up/?ticket=ST-560211-hmR****9sQqUchta-tpass"
 # 之后就可以用这个链接跳转实现对应逻辑
 ```
+
+你可以跳转到我的[另一个项目](https://github.com/twoonefour/electricity_fee_moniter)看我的用法
 # Disclaimer
 此程序仅用于学习交流，如认为侵犯权益，请联系我，我会将其删除
