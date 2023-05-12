@@ -37,7 +37,8 @@ example.whut_login(service_url, username, password) # 武理统一门户登录�
 from __init__ import Sign_xy
 example = Sign_xy()
 url = example.whut_login("http://zhlgd.whut.edu.cn/tp_up/", username, password)
-print(url) # "http://zhlgd.whut.edu.cn/tp_up/?ticket=ST-560211-hmR****9sQqUchta-tpass"
+print(url)
+# "http://zhlgd.whut.edu.cn/tp_up/?ticket=ST-560211-hmR****9sQqUchta-tpass"
 # 之后就可以用这个链接跳转实现对应逻辑
 ```
 
