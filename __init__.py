@@ -191,19 +191,8 @@ class Sign_xy:
                     print(result)
                     result1 = self.sessions.post(
                         "https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
-                            "code": "",
-                            "register_id": result["data"]["signing_register"][0]["id"],
-                            "qrtype": "SIGNIN",
-                            "r": ""
-                        }, verify=False)
-                    result1 = json.loads(result1.text)
-                    print(result1)
-                    result1 = self.sessions.post(
-                        "https://{}/api/jx-iresource/register/sign".format(self.headers["Host"]), json={
-                            "code": "",
-                            "register_id": result["data"]["id"],
-                            "qrtype": "SIGNIN",
-                            "r": ""
+                            "check_type": "1",
+                            "register_id": result["data"]["signing_register"][0]["id"]
                         }, verify=False)
                     result1 = json.loads(result1.text)
                     print(result1)
