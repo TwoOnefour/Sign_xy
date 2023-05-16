@@ -183,10 +183,11 @@ class Sign_xy:
             self.times = 1
         else:
             self.times = int(self.times)
-        for times in range(self.times):
-            if self.pattern == "1":
-                self.times += 1  # 永久运行
-            self.get_cookie_status()
+        if self.pattern == "1":
+            self.times = True
+        count = 0 # 用于记录循环次数
+        while self.times or count < self.times:
+            self.get_cookie_status()  # 查看cookie状况，如果过期重新登陆
             for i in self.getGroup_id():  # 暂且写为所有课程都签到一遍
                 # self.get_open_course(i.strip("\n"))["data"]
                 # self.getRegister_id(i)
@@ -215,6 +216,7 @@ class Sign_xy:
                     if self.pattern != "1":
                         return
             time.sleep(60)  # 不建议改动
+            count += 1
 
             # else:
             #     print("此课程不需要签到")
