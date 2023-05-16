@@ -153,7 +153,7 @@ class Sign_xy:
             f.write(self.headers["Authorization"])
         userinfo = json.loads(self.getUserInfo().text)
         realname = userinfo["result"]["realname"]
-        # signInfo = userinfo["result"]["sign"]  # 可能是签到信息，暂且留空,不用留空，证明为不存在
+        # signInfo = userinfo["result"]["sign"]  # 可能是签到信息，暂且留空,不用留空。2023.05.16 证明为有签到任务也不存在此数据
         print("Login successfully. Welcome, {}".format(realname))
         self.relogin = False
         if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/account.txt"):
