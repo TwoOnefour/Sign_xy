@@ -7,10 +7,12 @@ from Crypto.Cipher import DES
 import base64
 from lxml import etree
 from enc import *
+
+
 class Sign_xy:
     def __init__(self):
         # urllib3.disable_warnings()
-        self.server_chan_apikey = ""
+        self.server_chan_apikey = ""  # server酱的apikey
         self.type = None
         self.webdriver = None
         self.times = None
@@ -47,7 +49,7 @@ class Sign_xy:
                 self.headers["schoolcertify"] = account_list[2].strip("\n").strip(" ")
                 self.pattern = account_list[3].strip("\n").strip(" ")
 
-    def encrypt(self, data):
+    def encrypt(self, data):  # 小雅自带的加密
         bs = 8
         password = "bbd92272a179a2db46ee01aed4df8cda".encode("utf-8")[:8]
         iv = "12345678".encode("utf-8")
@@ -55,7 +57,7 @@ class Sign_xy:
         cipher = DES.new(password, DES.MODE_CBC, iv)
         return base64.b64encode(cipher.encrypt(pad(data).encode())).decode("utf-8")
 
-    def whut_login(self, service, username, password):
+    def whut_login(self, service, username, password):  # 门户登录的逻辑
         self.sessions.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
         })
@@ -86,8 +88,9 @@ class Sign_xy:
         if result.headers.get("location") is None:
             return False
         return result.headers["location"]
-    def login(self):
-        if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt"):
+
+    def login(self):  # 登陆主函数
+        if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt"):  # 如果有登录信息，直接使用
             print("Cookies exists. Try to login by using cookies.")
             with open(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt", "r") as f:
                 self.headers["Authorization"] = f.readline().strip("\n")
@@ -95,7 +98,7 @@ class Sign_xy:
             # self.sessions.get("{}/api")
             # self.getUserInfo()
             result = json.loads(self.getUserInfo().text)
-            if result["code"] != 200:
+            if result["code"] != 200: # cookie过期
                 print("Cookies has expired. Sign in automatically.")
                 self.relogin = True
                 os.remove("./authorization.txt")
@@ -122,7 +125,7 @@ class Sign_xy:
                     print("请填入账号密码。注意：账号密码为你统一身份认证的账号密码")
                     self.account["username"] = input("学号：")
                     self.account["password"] = input("密码：")
-            if self.pattern == "1":
+            if self.pattern == "1":  # 门户登录
                 self.sessions.cookies.clear()
                 url = self.whut_login("https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497", self.account["username"], self.account["password"])
                 result1 = self.sessions.get(url, verify=False)
@@ -130,22 +133,22 @@ class Sign_xy:
                 self.sessions.headers.update(self.headers)
                 self.login_success()
                 return True
-            password = self.encrypt(self.account["password"])
+            password = self.encrypt(self.account["password"])  # 密码加密
             self.sessions.headers.update(self.headers)
             result = self.sessions.post(
                 "https://{}/api/jw-starcmooc/user/unifiedCheckLogin".format(self.headers["Host"]), verify=False, json={
                     "password": password,
                     "loginName": self.account["username"]
                 }, headers=self.headers)
-            if result.json().get("result") is None:
+            if result.json().get("result") is None: # 如果登陆失败返回False
                 return False
             token = json.loads(result.text)["result"]["token"]
-            self.headers["Authorization"] = "Bearer {}".format(token)
+            self.headers["Authorization"] = "Bearer {}".format(token) # 设置cookie
             self.sessions.headers.update(self.headers)
             self.login_success()
         return True
 
-    def login_success(self):
+    def login_success(self):  # 登录成功后执行的函数 保存cookie和用户账号密码信息，输出信息到控制台
         with open(os.path.split(os.path.realpath(__file__))[0] + "/authorization.txt", "w") as f:
             f.write(self.headers["Authorization"])
         userinfo = json.loads(self.getUserInfo().text)
@@ -159,10 +162,11 @@ class Sign_xy:
             f.write(self.account["username"] + "\n" + self.account["password"] + "\n" + self.headers[
                 "schoolcertify"] + "\n" + self.pattern + "\n")
 
-    def getUserInfo(self):
+    def getUserInfo(self):  # 查看用户信息
         return self.sessions.get("https://{}/api/jw-starcmooc/user/currentUserInfo".format(self.headers["Host"]),
                                  verify=False)
-    def get_cookie_status(self):
+
+    def get_cookie_status(self):  # 判断cookie是否过期
         if self.getUserInfo().json()["code"] == 401:
             try:
                 print("Cookies has expired. Sign in automatically.")
@@ -173,7 +177,8 @@ class Sign_xy:
             while True:
                 if self.login():
                     break
-    def sign(self):
+
+    def sign(self):  # 签到函数
         if not self.times:
             self.times = 1
         else:
@@ -200,11 +205,13 @@ class Sign_xy:
                         msg = "{}   {}签到成功".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"])
                     elif result1["code"] == 50011:
                         msg = "{}   {}已经签到过了".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"])
+                        time.sleep(60 * 90)  # 如果签到过了暂停90分钟签到
                     else:
                         msg = "{}   {}{}".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"],
                                                  result1["message"])
+                        time.sleep(60 * 90)  # 如果签到过了暂停90分钟签到
                     print(msg)
-                    requests.get(f"https://sctapi.ftqq.com/SCT186661TSyCvsm2MeOIFJBGtqx7ptmWn.send?title={msg}")
+                    requests.get(f"https://sctapi.ftqq.com/{self.server_chan_apikey}.send?title={msg}")
                     if self.pattern != "1":
                         return
             time.sleep(60)  # 不建议改动
@@ -212,20 +219,20 @@ class Sign_xy:
             # else:
             #     print("此课程不需要签到")
 
-    def getRegister_id(self, group_id):
+    def getRegister_id(self, group_id):  # 获取签到id
         return json.loads(self.sessions.get(
             "https://{}/api/jx-iresource/course/getOpenCourse?group_id={}&is_in_course=2".format(self.headers["Host"],
                                                                                                  group_id),
             verify=False).text)
 
-    def get_tasks(self, group_id):
+    def get_tasks(self, group_id):  # 获取作业信息
         result = self.sessions.get("https://ccnu.ai-augmented.com/api/jx-stat/group/task/queryTaskNotices", params={
             "group_id": group_id,
             "role": 1
         })
         return json.loads(result.text)["data"]["student_tasks"]
 
-    def finish_media(self):
+    def finish_media(self):  # 完成视频 or 音频作业函数
         try:
             count = 0
             for j in self.getGroup_id():
@@ -240,7 +247,7 @@ class Sign_xy:
                         #     # "duration": 1,  # 总时间
                         #     # "played": 1,  # 播放次数
                         #     # "watched_duration": 1  # 已经看过的时长
-                        #     # })  # 先请求一次获得duration,但是他好像没对这里做duration鉴权，duration为1返回的数据也是1，导致可以不用先请求
+                        #     # })  # 先请求一次获得duration,但是他好像没对这里做duration鉴权，duration为1返回的数据也是1，导致可以不用先请求 ps: 也许存在sql注入？
                         #     result = json.loads(result.text)
                         # result = result["data"]
                         # watched_duration = max(0, float(result["duration"]) - float(result["watched_duration"]) + 1)
@@ -264,13 +271,13 @@ class Sign_xy:
         except Exception as e:
             print(str(type(e)) + ":" + str(e))
 
-    def get_open_course(self, group_id):
+    def get_open_course(self, group_id):  # 获取签到的课程信息
         result = self.sessions.get(f'https://{self.headers["Host"]}/api/jx-iresource/course/getOpenCourse', params={
             "group_id": group_id,
         })
         return result.json()
 
-    def getGroup_id(self):
+    def getGroup_id(self):  # 获取group_id
         if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/group_id.txt"):
             with open(os.path.split(os.path.realpath(__file__))[0] + "/group_id.txt", "r") as f:
                 result = f.readlines()
@@ -287,7 +294,7 @@ class Sign_xy:
         # if os.path.exists("./group_id.txt"):
         return result
 
-    def run(self):
+    def run(self):  # 程序入口函数
         if not self.type:
             return
         while True:
