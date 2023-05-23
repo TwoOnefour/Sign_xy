@@ -42,6 +42,6 @@ print(url)
 # 之后就可以用这个链接跳转实现对应逻辑
 ```
 
-你可以跳转到我的[另一个项目](https://github.com/TwoOnefour/electricity_fee_moniter/blob/main/electricity_fee_moniter.py)看我的用法
+你可以跳转到我的[另一个项目](https://github.com/Taxzer/electricity_fee_moniter/blob/main/electricity_fee_moniter.py)看我的用法
 # Disclaimer
 此程序仅用于学习交流，如认为侵犯权益，请联系我，我会将其删除
