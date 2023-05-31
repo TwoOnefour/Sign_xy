@@ -8,7 +8,7 @@
 # Configuration
 ## Install Module
 ```
-pip install -r requirements.txt -i https://pypi.tsinghua.edu.cn/simple
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 ## Modify username and password
