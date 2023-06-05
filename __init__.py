@@ -68,7 +68,7 @@ class Sign_xy:
         # tree = etree.parse(local_file_path)
         tree = etree.HTML(html._content.decode("utf-8"))
         tpass = dict(tree.xpath('//*[@id="lt"]')[0].attrib)["value"]
-        des = strEnc(self.account["username"] + self.account["password"] + tpass, "1", "2", "3")
+        # des = strEnc(self.account["username"] + self.account["password"] + tpass, "1", "2", "3")
         self.sessions.headers.update({})
         self.sessions.cookies.set(domain="whut.edu.cn", path="/", name="cas_hash", value="")
         # print(tpass)
@@ -78,9 +78,9 @@ class Sign_xy:
                 "service": service
             },
             data={
-                "rsa": des,
-                "ul": len(username),
-                "pl": len(password),
+                "rsa": "",
+                "ul": encrypt(username),
+                "pl": encrypt(password),
                 "lt": tpass,
                 "execution": "e1s1",
                 "_eventId": "submit",
