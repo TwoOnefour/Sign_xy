@@ -206,7 +206,9 @@ class Sign_xy:
                         msg = "{}   {}签到成功".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"])
                     elif result1["code"] == 50011:
                         msg = "{}   {}已经签到过了".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"])
+                        print(msg)
                         time.sleep(60 * 90)  # 如果签到过了暂停90分钟签到
+                        continue
                     else:
                         msg = "{}   {}{}".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"],
                                                  result1["message"])
