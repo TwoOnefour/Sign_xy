@@ -72,6 +72,7 @@ class Sign_xy:
         self.sessions.headers.update({})
         self.sessions.cookies.set(domain="whut.edu.cn", path="/", name="cas_hash", value="")
         # print(tpass)
+        public_key = self.sessions.post("http://zhlgd.whut.edu.cn/tpass/rsa").json()["publicKey"]
         result = self.sessions.post(
             url="http://zhlgd.whut.edu.cn/tpass/login",
             params={
@@ -79,8 +80,8 @@ class Sign_xy:
             },
             data={
                 "rsa": "",
-                "ul": encrypt(username),
-                "pl": encrypt(password),
+                "ul": encrypt(username, public_key),
+                "pl": encrypt(password, public_key),
                 "lt": tpass,
                 "execution": "e1s1",
                 "_eventId": "submit",
