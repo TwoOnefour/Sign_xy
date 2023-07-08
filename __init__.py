@@ -60,6 +60,7 @@ class Sign_xy:
     def whut_login(self, service, username, password):  # 门户登录的逻辑
         self.sessions.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
+            "Content-Type": "application/x-www-form-urlencoded;charset:utf-8;"
         })
         html = self.sessions.get("http://zhlgd.whut.edu.cn/tpass/login", params={
             "service": service
