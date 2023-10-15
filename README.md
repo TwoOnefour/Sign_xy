@@ -23,6 +23,7 @@ python ./main.py -h 帮助
 ```
 这个程序会在目录下生成一个Authorization.txt的文件用于存放token，同时会生成一个group_id.txt的文件，group_id.txt作为课程列表缓存，避免反复访问api，然后程序会遍历这些课程一个个签到
 
+**注意，请在每个学期开始的时候清除目录下group_id.txt文件,否则将不会刷新课程**
 建议配合linux的crontab使用，在你经常需要打卡的课的时间段写下crontab命令
 
 # API
