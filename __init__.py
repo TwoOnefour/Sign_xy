@@ -258,6 +258,7 @@ class Sign_xy:
                             result = self.sessions.get("https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"])).json()  # 先请求一次获得duration,但是他好像没对这里做duration鉴权，duration为1返回的数据也是1，导致可以不用先请求 ps: 也许存在sql注入？
                         result = result["data"]
                         watched_duration = max(0, float(result["duration"]) - float(result["watched_duration"]) + 1)
+
                         self.sessions.post(
                             "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
                             json={
@@ -274,6 +275,7 @@ class Sign_xy:
                                 "group_id": i["group_id"]
                             })
                         count += 1
+                        time.sleep(1)
             print(f"完成了{count}个作业")
         except Exception as e:
             print(str(type(e)) + ":" + str(e))
