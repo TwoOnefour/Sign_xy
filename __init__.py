@@ -286,8 +286,8 @@ class Sign_xy:
             print(str(type(e)) + ":" + str(e))
 
     def set_record(self, group_id):
+        print("开始刷时长")
         while True:
-            print("开始刷时长")
             for i in self.get_tasks(group_id):
                 self.get_cookie_status()
                 self.sessions.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
