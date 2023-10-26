@@ -48,6 +48,7 @@ class Sign_xy:
                 self.account["password"] = account_list[1].strip("\n").strip(" ")
                 self.headers["schoolcertify"] = account_list[2].strip("\n").strip(" ")
                 self.pattern = account_list[3].strip("\n").strip(" ")
+        self.group_id = None
 
     def encrypt(self, data):  # 小雅自带的加密
         bs = 8
@@ -58,10 +59,10 @@ class Sign_xy:
         return base64.b64encode(cipher.encrypt(pad(data).encode())).decode("utf-8")
 
     def whut_login(self, service, username, password):  # 门户登录的逻辑
-        self.sessions.headers.update({
+        self.sessions.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
             "Content-Type": "application/x-www-form-urlencoded;charset:utf-8;"
-        })
+        }
         html = self.sessions.get("http://zhlgd.whut.edu.cn/tpass/login", params={
             "service": service
         })
@@ -87,6 +88,7 @@ class Sign_xy:
                 "execution": "e1s1",
                 "_eventId": "submit",
             }, verify=False, allow_redirects=False)
+        self.sessions.headers = self.headers
         if result.headers.get("location") is None:
             return False
         return result.headers["location"]
@@ -187,7 +189,7 @@ class Sign_xy:
             self.times = int(self.times)
         if self.pattern == "1":
             self.times = True
-        count = 0 # 用于记录循环次数
+        count = 0  # 用于记录循环次数
         while self.times or count < self.times:
             self.get_cookie_status()  # 查看cookie状况，如果过期重新登陆
             for i in self.getGroup_id():  # 暂且写为所有课程都签到一遍
@@ -238,6 +240,12 @@ class Sign_xy:
         })
         return json.loads(result.text)["data"]["student_tasks"]
 
+    def get_course_info(self, group_id):
+        result = self.sessions.post(f"https://{self.headers['Host']}/api/jx-iresource/statistics/group/visit", json={
+            "group_id": group_id,
+            "role_type": "normal"
+        })
+        return result.json()
     def finish_media(self):  # 完成视频 or 音频作业函数
         try:
             count = 0
@@ -261,9 +269,9 @@ class Sign_xy:
                             "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
                             json={
                                 "media_type": 1,  # 类型为录音, 可以乱填
-                                "duration": 100,  # 总时间，建议200-300
-                                "played": 1,  # 播放次数
-                                "watched_duration": 200  # 已经看过的时长
+                                "duration": 200,  # 总时间，建议200-300
+                                "played": 10,  # 播放次数
+                                "watched_duration": 2000  # 已经看过的时长
                             })
                         result = self.sessions.post(
                             "https://ccnu.ai-augmented.com/api/jx-iresource/vod/checkTaskStatus", json={
@@ -276,6 +284,22 @@ class Sign_xy:
             print(f"完成了{count}个作业")
         except Exception as e:
             print(str(type(e)) + ":" + str(e))
+
+    def set_record(self, group_id):
+        while True:
+            print("开始刷时长")
+            for i in self.get_tasks(group_id):
+                self.get_cookie_status()
+                self.sessions.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
+                    "user_id": self.getUserInfo().json()["result"]["authorId"],
+                    "group_id": group_id,
+                    "clientType": 1,
+                    "roleType": 1,
+                    "resourceId": i["quote_id"]
+                })
+                time.sleep(10)
+
+        # self.getUserInfo().json()["result"]["authorId"]
 
     def get_open_course(self, group_id):  # 获取签到的课程信息
         result = self.sessions.get(f'https://{self.headers["Host"]}/api/jx-iresource/course/getOpenCourse', params={
@@ -296,8 +320,9 @@ class Sign_xy:
                 tmp.append(i["id"])
             with open(os.path.split(os.path.realpath(__file__))[0] + "/group_id.txt", "w") as f:
                 f.write("\n".join(tmp))
-            return tmp
+            result = tmp
         # if os.path.exists("./group_id.txt"):
+        self.group_id = result
         return result
 
     def run(self):  # 程序入口函数
@@ -314,3 +339,18 @@ class Sign_xy:
             self.finish_media()  # 自动刷课，刷视频接口
         elif self.type == "签到":
             self.sign()
+        elif self.type == "刷时长":
+            data = {}
+            for i in self.getGroup_id():
+                result = self.get_course_info(i.strip("\n"))
+                data[result["data"]["name"]] = i.strip("\n")
+                # self.getRegister_id(i.strip("\n"))
+                print(result["data"]["name"])
+            while True:
+                try:
+                    print()
+                    groupid = data[input("请输入一个你要刷时长的课：")]
+                    break
+                except KeyError as e:
+                    print("输入错误，请重新输入")
+            self.set_record(groupid)
