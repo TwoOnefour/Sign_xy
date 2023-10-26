@@ -267,6 +267,7 @@ class Sign_xy:
                                 "played": float(result["duration"]) * 10,  # 播放到的位置，单位秒
                                 "watched_duration": watched_duration * 10  # 已经看过的时长
                             })
+                        time.sleep(1)
                         result = self.sessions.post(
                             "https://ccnu.ai-augmented.com/api/jx-iresource/vod/checkTaskStatus", json={
                                 "task_id": i["task_id"],
