@@ -253,25 +253,18 @@ class Sign_xy:
                 tasks = self.get_tasks(j.strip("\n"))
                 for i in tasks:
                     if i["task_type"] == 1 and i["finish"] == 0:
-                        # result = self.sessions.get("https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"])).text
-                        # result = json.loads(result)
-                        # if result["code"] == 60009:
-                        #     # result = self.sessions.post("https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]), json={
-                        #     # "media_type": 1,  # 类型为录音
-                        #     # "duration": 1,  # 总时间
-                        #     # "played": 1,  # 播放次数
-                        #     # "watched_duration": 1  # 已经看过的时长
-                        #     # })  # 先请求一次获得duration,但是他好像没对这里做duration鉴权，duration为1返回的数据也是1，导致可以不用先请求 ps: 也许存在sql注入？
-                        #     result = json.loads(result.text)
-                        # result = result["data"]
-                        # watched_duration = max(0, float(result["duration"]) - float(result["watched_duration"]) + 1)
+                        result = self.sessions.get("https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"])).json()
+                        if result["code"] == 60009:
+                            result = self.sessions.get("https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"])).json()  # 先请求一次获得duration,但是他好像没对这里做duration鉴权，duration为1返回的数据也是1，导致可以不用先请求 ps: 也许存在sql注入？
+                        result = result["data"]
+                        watched_duration = max(0, float(result["duration"]) - float(result["watched_duration"]) + 1)
                         self.sessions.post(
                             "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
                             json={
                                 "media_type": 1,  # 类型为录音, 可以乱填
-                                "duration": 200,  # 总时间，建议200-300
-                                "played": 10,  # 播放次数
-                                "watched_duration": 2000  # 已经看过的时长
+                                "duration": result["duration"],  # 总时间，建议200-300
+                                "played": result["duration"] * 10,  # 播放到的位置，单位秒
+                                "watched_duration": watched_duration * 10  # 已经看过的时长
                             })
                         result = self.sessions.post(
                             "https://ccnu.ai-augmented.com/api/jx-iresource/vod/checkTaskStatus", json={
