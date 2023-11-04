@@ -315,16 +315,21 @@ class Sign_xy:
     def set_record(self, group_id):
         print("开始刷时长")
         while True:
-            for i in self.get_tasks(group_id):
-                self.get_cookie_status()
-                self.sessions.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
-                    "user_id": self.getUserInfo().json()["result"]["authorId"],
-                    "group_id": group_id,
-                    "clientType": 1,
-                    "roleType": 1,
-                    "resourceId": i["quote_id"]
-                })
-                time.sleep(10)
+            try:
+                if self.get_cookie_status():
+                    for i in self.get_tasks(group_id):
+                            self.sessions.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
+                                "user_id": self.getUserInfo().json()["result"]["authorId"],
+                                "group_id": group_id,
+                                "clientType": 1,
+                                "roleType": 1,
+                                "resourceId": i["quote_id"]
+                            })
+                        time.sleep(10)
+                else:
+                    self.login()
+            except Exception as e:
+                continue
 
         # self.getUserInfo().json()["result"]["authorId"]
 
