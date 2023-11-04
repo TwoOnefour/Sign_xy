@@ -102,7 +102,7 @@ class Sign_xy:
             # self.sessions.get("{}/api")
             # self.getUserInfo()
             result = json.loads(self.getUserInfo().text)
-            if result["code"] != 200: # cookie过期
+            if result["code"] != 200:  # cookie过期
                 print("Cookies has expired. Sign in automatically.")
                 self.relogin = True
                 os.remove("./authorization.txt")
@@ -124,14 +124,17 @@ class Sign_xy:
                         continue
                     break
             if self.headers["schoolcertify"] == "10497" and not self.relogin and self.pattern == "":
-                self.pattern = input("输入登录方式，1为门户登录（门户登录不会挤掉客户端，推荐，如果是门户登录将永久签到），2为小雅直接登录：")
+                self.pattern = input(
+                    "输入登录方式，1为门户登录（门户登录不会挤掉客户端，推荐，如果是门户登录将永久签到），2为小雅直接登录：")
             if self.account["username"] == "" or self.account["password"] == "":
-                    print("请填入账号密码。注意：账号密码为你统一身份认证的账号密码")
-                    self.account["username"] = input("学号：")
-                    self.account["password"] = input("密码：")
+                print("请填入账号密码。注意：账号密码为你统一身份认证的账号密码")
+                self.account["username"] = input("学号：")
+                self.account["password"] = input("密码：")
             if self.pattern == "1":  # 门户登录
                 self.sessions.cookies.clear()
-                url = self.whut_login("https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497", self.account["username"], self.account["password"])
+                url = self.whut_login(
+                    "https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497",
+                    self.account["username"], self.account["password"])
                 result1 = self.sessions.get(url, verify=False)
                 self.headers["Authorization"] = f'Bearer {self.sessions.cookies.get("HS-prd-access-token")}'
                 self.sessions.headers.update(self.headers)
@@ -144,10 +147,10 @@ class Sign_xy:
                     "password": password,
                     "loginName": self.account["username"]
                 }, headers=self.headers)
-            if result.json().get("result") is None: # 如果登陆失败返回False
+            if result.json().get("result") is None:  # 如果登陆失败返回False
                 return False
             token = json.loads(result.text)["result"]["token"]
-            self.headers["Authorization"] = "Bearer {}".format(token) # 设置cookie
+            self.headers["Authorization"] = "Bearer {}".format(token)  # 设置cookie
             self.sessions.headers.update(self.headers)
             self.login_success()
         return True
@@ -209,7 +212,8 @@ class Sign_xy:
                     if result1["code"] == 0:
                         msg = "{}   {}签到成功".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"])
                     elif result1["code"] == 50011:
-                        msg = "{}   {}已经签到过了".format(str(datetime.datetime.now())[0:-7], result["data"]["group_name"])
+                        msg = "{}   {}已经签到过了".format(str(datetime.datetime.now())[0:-7],
+                                                           result["data"]["group_name"])
                         print(msg)
                         time.sleep(60 * 90)  # 如果签到过了暂停90分钟签到
                         continue
@@ -246,6 +250,7 @@ class Sign_xy:
             "role_type": "normal"
         })
         return result.json()
+
     def finish_media(self):  # 完成视频 or 音频作业函数
         try:
             count = 0
@@ -253,40 +258,56 @@ class Sign_xy:
                 tasks = self.get_tasks(j.strip("\n"))
                 for i in tasks:
                     if i["task_type"] == 1 and i["finish"] == 0:
-                        self.sessions.post(
-                            "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
-                            json={
-                                "media_type": 1,  # 类型为录音, 可以乱填
-                                "duration": 1,  # 总时间，建议200-300
-                                "played": 200,  # 播放到的位置，单位秒
-                                "watched_duration": 200  # 已经看过的时长
-                            })
-                        result = self.sessions.get("https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"])).json()
-                        if result["code"] == 60009:
-                            result = self.sessions.get("https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"])).json()  # 先请求一次获得duration,但是他好像没对这里做duration鉴权，duration为1返回的数据也是1，导致可以不用先请求 ps: 也许存在sql注入？
-                            if result.get("data") is None:
-                                continue
-                        else:
-                            result = result["data"]
-                        watched_duration = max(0, float(result["duration"]) - float(result["watched_duration"]) + 1)
-                        
-                        self.sessions.post(
-                            "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
-                            json={
-                                "media_type": 1,  # 类型为录音, 可以乱填
-                                "duration": float(result["duration"]) + 1,  # 总时间，建议200-300
-                                "played": float(result["duration"]) + 1,  # 播放到的位置，单位秒
-                                "watched_duration": watched_duration * 10  # 已经看过的时长
-                            })
-                        result = self.sessions.post(
-                            "https://ccnu.ai-augmented.com/api/jx-iresource/vod/checkTaskStatus", json={
-                                "task_id": i["task_id"],
-                                "media_id": i["quote_id"],
-                                "assign_id": i["assign_id"],
-                                "group_id": i["group_id"]
-                            })
-                        count += 1
-                        time.sleep(1)
+                        try:
+                            # self.sessions.post(
+                            #     "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
+                            #     json={
+                            #         "media_type": 1,  # 类型为录音, 可以乱填
+                            #         "duration": 1,  # 总时间，建议200-300
+                            #         "played": 200,  # 播放到的位置，单位秒
+                            #         "watched_duration": 200  # 已经看过的时长
+                            #     })
+                            # result = self.sessions.get(
+                            #     "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(
+                            #         i["quote_id"])).json()
+                            # if result["code"] == 60009:
+                            #     result = self.sessions.get(
+                            #         "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"])).json()  # 先请求一次获得duration,但是他好像没对这里做duration鉴权，duration为1返回的数据也是1，导致可以不用先请求 ps: 也许存在sql注入？
+                            #     if result.get("data") is None:
+                            #         continue
+                            # else:
+                            #     result = result["data"]
+                            # watched_duration = max(0, float(result["duration"]) - float(result["watched_duration"]) + 1)
+
+                            # self.sessions.post(
+                            #     "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
+                            #     json={
+                            #         "media_type": 1,  # 类型为录音, 可以乱填
+                            #         "duration": float(result["duration"]) + 1,  # 总时间，建议200-300
+                            #         "played": float(result["duration"]) + 1,  # 播放到的位置，单位秒
+                            #         "watched_duration": watched_duration * 10  # 已经看过的时长
+                            #     })
+                            self.sessions.post(
+                                "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
+                                json={
+                                    "media_type": 1,  # 类型为录音, 可以乱填
+                                    "duration": 200,  # 总时间，建议200-300
+                                    "played": 200,  # 播放到的位置，单位秒
+                                    "watched_duration": 2000  # 已经看过的时长
+                                })
+                            result = self.sessions.post(
+                                "https://ccnu.ai-augmented.com/api/jx-iresource/vod/checkTaskStatus", json={
+                                    "task_id": i["task_id"],
+                                    "media_id": i["quote_id"],
+                                    "assign_id": i["assign_id"],
+                                    "group_id": i["group_id"]
+                                })
+                            count += 1
+                            # time.sleep(1)
+                        except requests.exceptions.SSLError:
+                            pass
+                        except KeyError:
+                            pass
             print(f"完成了{count}个作业")
         except Exception as e:
             print(str(type(e)) + ":" + str(e))
