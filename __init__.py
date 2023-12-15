@@ -183,7 +183,9 @@ class Sign_xy:
                 print(e)
             while True:
                 if self.login():
+                    return True
                     break
+        return True
 
     def sign(self):  # 签到函数
         if not self.times:
@@ -325,7 +327,7 @@ class Sign_xy:
                                 "roleType": 1,
                                 "resourceId": i["quote_id"]
                             })
-                        time.sleep(10)
+                    time.sleep(10)
                 else:
                     self.login()
             except Exception as e:
