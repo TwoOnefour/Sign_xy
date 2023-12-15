@@ -177,14 +177,17 @@ class Sign_xy:
         if self.getUserInfo().json()["code"] == 401:
             try:
                 print("Cookies has expired. Sign in automatically.")
-                os.remove("./authorization.txt")
+                if os.path.exists("./authorization.txt"):
+                    os.remove("./authorization.txt")
                 self.relogin = True
             except Exception as e:
                 print(e)
             while True:
                 if self.login():
                     return True
-                    break
+
+                time.sleep(10)
+
         return True
 
     def sign(self):  # 签到函数
@@ -318,18 +321,16 @@ class Sign_xy:
         print("开始刷时长")
         while True:
             try:
-                if self.get_cookie_status():
-                    for i in self.get_tasks(group_id):
-                            self.sessions.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
-                                "user_id": self.getUserInfo().json()["result"]["authorId"],
-                                "group_id": group_id,
-                                "clientType": 1,
-                                "roleType": 1,
-                                "resourceId": i["quote_id"]
-                            })
-                    time.sleep(10)
-                else:
-                    self.login()
+                self.get_cookie_status()
+                for i in self.get_tasks(group_id):
+                    self.sessions.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
+                        "user_id": self.getUserInfo().json()["result"]["authorId"],
+                        "group_id": group_id,
+                        "clientType": 1,
+                        "roleType": 1,
+                        "resourceId": i["quote_id"]
+                    })
+                time.sleep(10)
             except Exception as e:
                 continue
 
@@ -368,6 +369,7 @@ class Sign_xy:
             if not self.relogin:
                 print("登陆失败，请确认登陆模式和账号密码")
                 self.account["username"] = ""
+
 
         if self.type == "刷课":
             self.finish_media()  # 自动刷课，刷视频接口
