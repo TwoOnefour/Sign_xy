@@ -1,3 +1,6 @@
+import asyncio
+
+import httpx
 import requests
 import os
 import json
@@ -318,22 +321,52 @@ class Sign_xy:
             print(str(type(e)) + ":" + str(e))
 
     def set_record(self, group_id):
-        print("开始刷时长")
         while True:
             try:
-                self.get_cookie_status()
-                for i in self.get_tasks(group_id):
-                    self.sessions.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
-                        "user_id": self.getUserInfo().json()["result"]["authorId"],
-                        "group_id": group_id,
-                        "clientType": 1,
-                        "roleType": 1,
-                        "resourceId": i["quote_id"]
-                    })
-                time.sleep(10)
+                target = int(input("请输入刷的时间（单位小时）："))
+                break
             except Exception as e:
-                continue
+                print("输入错误，请输入正确的时间（阿拉伯数字）")
 
+        task = self.get_tasks(group_id)
+        print("开始刷时长")
+        j = 0
+        async def post(user_id, group_id, resourceId, headers, cookies):
+            # session.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
+            #     "user_id": user_id,
+            #     "group_id": group_id,
+            #     "clientType": 1,
+            #     "roleType": 1,
+            #     "resourceId": resourceId
+            # })
+            try:
+                async with httpx.AsyncClient(verify=False, headers=headers, cookies=cookies,
+                                             timeout=30) as client:
+
+                        await client.post(f'https://{headers["host"]}/api/jx-iresource/learnLength/learnRecord', json={
+                            "user_id": user_id,
+                            "group_id": group_id,
+                            "clientType": 1,
+                            "roleType": 1,
+                            "resourceId": resourceId
+                        })
+            except Exception as e:
+                pass
+        async def running(tasks):
+            await asyncio.gather(*(item for item in tasks))
+        userId = self.getUserInfo().json()["result"]["authorId"]
+        for i in range(target * 15):
+            if len(task) == 0:
+                print("无任务，跳过")
+                break
+            asyncio_task = []
+            cookies = self.sessions.cookies
+            headers = self.sessions.headers
+            for k in range(5):
+                asyncio_task.append(post(userId, group_id, task[j]["quote_id"], headers, cookies))
+                j = (j + 1) % len(task)
+            asyncio.run(running(asyncio_task))
+        print("已完成，若不放心请多刷几次")
         # self.getUserInfo().json()["result"]["authorId"]
 
     def get_open_course(self, group_id):  # 获取签到的课程信息
