@@ -66,7 +66,7 @@ class Sign_xy:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
             "Content-Type": "application/x-www-form-urlencoded;charset:utf-8;"
         }
-        html = self.sessions.get("http://zhlgd.whut.edu.cn/tpass/login", params={
+        html = self.sessions.get("https://zhlgd.whut.edu.cn/tpass/login", params={
             "service": service
         })
         etree.HTMLParser(encoding="utf-8")
@@ -77,9 +77,9 @@ class Sign_xy:
         self.sessions.headers.update({})
         self.sessions.cookies.set(domain="whut.edu.cn", path="/", name="cas_hash", value="")
         # print(tpass)
-        public_key = self.sessions.post("http://zhlgd.whut.edu.cn/tpass/rsa").json()["publicKey"]
+        public_key = self.sessions.post("https://zhlgd.whut.edu.cn/tpass/rsa").json()["publicKey"]
         result = self.sessions.post(
-            url="http://zhlgd.whut.edu.cn/tpass/login",
+            url="https://zhlgd.whut.edu.cn/tpass/login",
             params={
                 "service": service
             },
