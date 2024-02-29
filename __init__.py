@@ -39,6 +39,7 @@ class Sign_xy:
         }
         self.url = "https://{}".format(self.headers["Host"])
         self.sessions = requests.Session()
+        self.sessions.verify = False
         self.account = {
             "username": "",
             "password": ""
@@ -135,11 +136,32 @@ class Sign_xy:
                 self.account["password"] = input("密码：")
             if self.pattern == "1":  # 门户登录
                 self.sessions.cookies.clear()
+                # self.sessions.get("https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497")
+                # SESSION = self.sessions.cookies.get("SESSION")
+                # self.sessions.cookies.clear()
+                # self.sessions.cookies.set("SESSION", SESSION, domain="whut.ai-augmented.com", path="/api/jw-starcmooc/")
                 url = self.whut_login(
                     "https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497",
                     self.account["username"], self.account["password"])
-                result1 = self.sessions.get(url, verify=False)
-                self.headers["Authorization"] = f'Bearer {self.sessions.cookies.get("HS-prd-access-token")}'
+                self.sessions.headers["Host"] = "whut.ai-augmented.com"
+                self.sessions.headers.update(self.sessions.headers)
+                self.sessions.get(url)
+                # SESSION = self.sessions.cookies.get("SESSION")
+                # self.sessions.cookies.clear()
+                # url = self.whut_login(
+                #     "https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497",
+                #     self.account["username"], self.account["password"])
+                # self.sessions.cookies.clear()
+                # result1 = self.sessions.get(url, verify=False, cookies={
+                #     "SESSION": SESSION,
+                #     "WT-prd-login-schoolCertify": "10497",
+                #     "WT-prd-rememberme": "false",
+                #     "WT-prd-login-schoolId": "f8d0cbf5d0d5aed8d698612d4212b7a9",
+                #     "WT-prd-login-type": "3",
+                #     "WT-prd-redirectUrl": "null",
+                #     "WT-prd-language": "zh-CN"
+                # })
+                self.headers["Authorization"] = f'Bearer {self.sessions.cookies.get("WT-prd-access-token")}'
                 self.sessions.headers.update(self.headers)
                 self.login_success()
                 return True
