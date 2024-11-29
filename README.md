@@ -46,6 +46,9 @@ print(url)
 ```
 
 你可以跳转到我的[另一个项目](https://github.com/Taxzer/electricity_fee_moniter/blob/main/electricity_fee_moniter.py)看我的用法
+
+# 更新日志
+2024/11/29 更新了接口加密参数，详见`Signature.py`，目前`刷时长`和`武理的登陆模块`是正常使用的，其他功能不保证使用
 # Disclaimer
 此程序仅用于学习交流，如认为侵犯权益，请联系我，我会将其删除
 

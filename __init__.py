@@ -10,7 +10,7 @@ from Crypto.Cipher import DES
 import base64
 from lxml import etree
 from enc import *
-
+from Signature import sign
 
 class Sign_xy:
     def __init__(self):
@@ -25,7 +25,7 @@ class Sign_xy:
         self.relogin = False
         self.headers = {
             "schoolcertify": "",  # 学校对应代码
-            "Host": "ccnu.ai-augmented.com",
+            "Host": "whut.ai-augmented.com",
             "Content-Type": "application/json; charset=utf-8",
             "access-control-allow-methods": "GET,POST,OPTIONS",
             "Accept-Encoding": "gzip, deflate, br",
@@ -140,11 +140,24 @@ class Sign_xy:
                 # SESSION = self.sessions.cookies.get("SESSION")
                 # self.sessions.cookies.clear()
                 # self.sessions.cookies.set("SESSION", SESSION, domain="whut.ai-augmented.com", path="/api/jw-starcmooc/")
+                self.sessions.headers.clear()
+                self.sessions.headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
+                    "Content-Type": "application/x-www-form-urlencoded;charset:utf-8;"
+                }
+
+                self.sessions.get("https://infra.ai-augmented.com/api/auth/cas/login?school_certify=10497&client_id=xy_client_whut&state=e4zq3d&redirect_uri=https%3A%2F%2Fwhut.ai-augmented.com%2Fapi%2Fjw-starcmooc%2Fuser%2FauthorCallback%3Fcb%3Dhttps%3A%2F%2Fwhut.ai-augmented.com%2Fapp%2Fjx-web%2Fmycourse&response_type=code&week_no_login_status=0&scope=&next=https%3A%2F%2Finfra.ai-augmented.com%2Fapp%2Fauth%2Foauth2%2FsecurityNotice%3Fresponse_type%3Dcode%26state%3De4zq3d%26client_id%3Dxy_client_whut%26redirect_uri%3Dhttps%3A%2F%2Fwhut.ai-augmented.com%2Fapi%2Fjw-starcmooc%2Fuser%2FauthorCallback%3Fcb%3Dhttps%3A%2F%2Fwhut.ai-augmented.com%2Fapp%2Fjx-web%2Fmycourse%26school%3D10497%26lang%3Dzh_CN&back=https%3A%2F%2Finfra.ai-augmented.com%2Fapp%2Fauth%2Foauth2%2Flogin%3Fresponse_type%3Dcode%26state%3De4zq3d%26client_id%3Dxy_client_whut%26redirect_uri%3Dhttps%3A%2F%2Fwhut.ai-augmented.com%2Fapi%2Fjw-starcmooc%2Fuser%2FauthorCallback%3Fcb%3Dhttps%3A%2F%2Fwhut.ai-augmented.com%2Fapp%2Fjx-web%2Fmycourse%26school%3D10497%26lang%3Dzh_CN")
+                XY_AUTH_SESSION = self.sessions.cookies.get(name="XY_AUTH_SESSION")
                 url = self.whut_login(
-                    "https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497",
+                    "https://infra.ai-augmented.com/api/auth/cas/login?school_certify=10497",
                     self.account["username"], self.account["password"])
                 self.sessions.headers["Host"] = "whut.ai-augmented.com"
+                self.sessions.headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
+                    "Content-Type": "application/x-www-form-urlencoded;charset:utf-8;"
+                }
                 self.sessions.headers.update(self.sessions.headers)
+                self.sessions.cookies.set(path="/", name="XY_AUTH_SESSION", value=XY_AUTH_SESSION)
                 self.sessions.get(url)
                 # SESSION = self.sessions.cookies.get("SESSION")
                 # self.sessions.cookies.clear()
@@ -161,6 +174,8 @@ class Sign_xy:
                 #     "WT-prd-redirectUrl": "null",
                 #     "WT-prd-language": "zh-CN"
                 # })
+                self.sessions.get("https://infra.ai-augmented.com/api/auth/oauth/onAccountAuthRedirect")
+                # self.sessions.get("https://whut.ai-augmented.com/api/jw-starcmooc/user/authorCallback?cb=https://whut.ai-augmented.com/app/jx-web/mycourse")
                 self.headers["Authorization"] = f'Bearer {self.sessions.cookies.get("WT-prd-access-token")}'
                 self.sessions.headers.update(self.headers)
                 self.login_success()
@@ -365,13 +380,13 @@ class Sign_xy:
                 async with httpx.AsyncClient(verify=False, headers=headers, cookies=cookies,
                                              timeout=30) as client:
 
-                        await client.post(f'https://{headers["host"]}/api/jx-iresource/learnLength/learnRecord', json={
+                        await client.post(f'https://{headers["host"]}/api/jx-iresource/learnLength/learnRecord', json=sign({
                             "user_id": user_id,
                             "group_id": group_id,
                             "clientType": 1,
                             "roleType": 1,
                             "resourceId": resourceId
-                        })
+                        }))
             except Exception as e:
                 pass
         async def running(tasks):
