@@ -29,6 +29,9 @@ python ./main.py -h 帮助
 建议配合linux的crontab使用，在你经常需要打卡的课的时间段写下crontab命令
 
 # API
+本处与原程序没有太大关系，可以不看
+
+你可以使用api登陆以武汉理工大学认证方式的所有网站
 ```commandline
 from __init__ import Sign_xy
 example = Sign_xy()
