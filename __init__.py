@@ -366,9 +366,9 @@ class Sign_xy:
                 print("输入错误，请输入正确的时间（阿拉伯数字）")
 
         task = self.get_tasks(group_id)
-        print("开始刷时长")
+        print("开始刷时长, 请耐心等待")
         j = 0
-        async def post(user_id, group_id, resourceId, headers, cookies):
+        async def post_learn_record(user_id, group_id, resourceId, headers, cookies):
             # session.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
             #     "user_id": user_id,
             #     "group_id": group_id,
@@ -380,15 +380,18 @@ class Sign_xy:
                 async with httpx.AsyncClient(verify=False, headers=headers, cookies=cookies,
                                              timeout=30) as client:
 
-                        await client.post(f'https://{headers["host"]}/api/jx-iresource/learnLength/learnRecord', json=sign({
+                        res = await client.post(f'https://{headers["host"]}/api/jx-iresource/learnLength/learnRecord', json=sign({
                             "user_id": user_id,
                             "group_id": group_id,
                             "clientType": 1,
                             "roleType": 1,
                             "resourceId": resourceId
                         }))
+                        if res.json()['message'] != 'ok':
+                            raise Exception(res.json()['message'])
             except Exception as e:
-                pass
+                print(e)
+
         async def running(tasks):
             await asyncio.gather(*(item for item in tasks))
         userId = self.getUserInfo().json()["result"]["authorId"]
@@ -400,7 +403,8 @@ class Sign_xy:
             cookies = self.sessions.cookies
             headers = self.sessions.headers
             for k in range(5):
-                asyncio_task.append(post(userId, group_id, task[j]["quote_id"], headers, cookies))
+                # 五个线程, 之前的逻辑是只要观看一次视频就会添加视频的时间时长，但新api好像加了验证？
+                asyncio_task.append(post_learn_record(userId, group_id, task[j]["quote_id"], headers, cookies))
                 j = (j + 1) % len(task)
             asyncio.run(running(asyncio_task))
         print("已完成，若不放心请多刷几次")

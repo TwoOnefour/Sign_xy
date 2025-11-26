@@ -19,10 +19,10 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 username为学号，password为你的明文密码，有小雅自带的加密登录，武理跳转统一门户登录
 # Usage
 ```
-python ./main.py -s 签到，如果后面跟着数字n，那么将会持续n次，间隔60秒签到
-python ./main.py -t 刷时长
-python ./main.py -f 刷课
-python ./main.py -h 帮助
+python ./main.py -s # 签到，如果后面跟着数字n，那么将会持续n次，间隔60秒签到
+python ./main.py -t # 刷时长, 时长功能我记得是第二天才会统计，若刷完后第二天没有统计，请发issue
+python ./main.py -f # 刷课
+python ./main.py -h # 帮助
 ```
 这个程序会在目录下生成一个Authorization.txt的文件用于存放token，同时会生成一个group_id.txt的文件，group_id.txt作为课程列表缓存，避免反复访问api，然后程序会遍历这些课程一个个签到
 
