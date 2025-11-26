@@ -51,15 +51,3 @@ def sign(query_body, nonce=None, timestamp=None):
         "timestamp": timestamp,
         "nonce": nonce
     }
-
-
-# # --- 测试调用 ---
-#
-# # 假设这是 oe.queryBody
-# query_body_example = json.loads("{\"user_id\":\"5986497624147014880\",\"group_id\":\"6246836215820113358\",\"clientType\":1,\"roleType\":1,\"resourceId\":\"6269067167879157574\"}")
-#
-# # 调用函数
-# result = create_signature(query_body_example)
-#
-# print("生成结果:")
-# print(json.dumps(result, indent=4))
