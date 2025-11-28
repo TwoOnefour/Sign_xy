@@ -311,15 +311,8 @@ class Sign_xy:
             print(str(type(e)) + ":" + str(e))
 
     def set_record(self, group_id):
-        while True:
-            try:
-                target = int(input("请输入刷的时间（单位小时）："))
-                break
-            except Exception as e:
-                print("输入错误，请输入正确的时间（阿拉伯数字）")
-
         task = self.get_tasks(group_id)
-        print("开始刷时长, 请耐心等待")
+        print("开始刷时长, 请耐心等待，若需要取消直接中断程序即可")
         j = 0
         async def post_learn_record(user_id, group_id, resourceId, headers, cookies, video_id):
             try:
@@ -354,7 +347,7 @@ class Sign_xy:
         async def running(tasks):
             await asyncio.gather(*(item for item in tasks))
         userId = self.getUserInfo().json()["result"]["authorId"]
-        for i in range(target * 15):
+        while True:
             if len(task) == 0:
                 print("无任务，跳过")
                 break
@@ -367,7 +360,7 @@ class Sign_xy:
                 asyncio_task.append(post_learn_record(userId, group_id, task[j]["quote_id"], headers, cookies, task[j]["quote_id"]))
                 j = (j + 1) % len(task) # 在task内循环
             asyncio.run(running(asyncio_task))
-        print("已完成，若不放心请多刷几次")
+        # print("已完成，若不放心请多刷几次")
         # self.getUserInfo().json()["result"]["authorId"]
 
     def get_open_course(self, group_id):  # 获取签到的课程信息
