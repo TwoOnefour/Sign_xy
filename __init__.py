@@ -1,4 +1,5 @@
 import asyncio
+from random import randint
 
 import httpx
 import requests
@@ -129,17 +130,13 @@ class Sign_xy:
                     break
             if self.headers["schoolcertify"] == "10497" and not self.relogin and self.pattern == "":
                 self.pattern = input(
-                    "输入登录方式，1为门户登录（门户登录不会挤掉客户端，推荐，如果是门户登录将永久签到），2为小雅直接登录：")
+                    "输入登录方式，1为门户登录（门户登录不会挤掉客户端，推荐，如果是门户登录将永久保存），2为小雅账号密码直接登录：")
             if self.account["username"] == "" or self.account["password"] == "":
                 print("请填入账号密码。注意：账号密码为你统一身份认证的账号密码")
                 self.account["username"] = input("学号：")
                 self.account["password"] = input("密码：")
             if self.pattern == "1":  # 门户登录
                 self.sessions.cookies.clear()
-                # self.sessions.get("https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497")
-                # SESSION = self.sessions.cookies.get("SESSION")
-                # self.sessions.cookies.clear()
-                # self.sessions.cookies.set("SESSION", SESSION, domain="whut.ai-augmented.com", path="/api/jw-starcmooc/")
                 self.sessions.headers.clear()
                 self.sessions.headers = {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
@@ -159,21 +156,6 @@ class Sign_xy:
                 self.sessions.headers.update(self.sessions.headers)
                 self.sessions.cookies.set(path="/", name="XY_AUTH_SESSION", value=XY_AUTH_SESSION)
                 self.sessions.get(url)
-                # SESSION = self.sessions.cookies.get("SESSION")
-                # self.sessions.cookies.clear()
-                # url = self.whut_login(
-                #     "https://whut.ai-augmented.com/api/jw-starcmooc/user/cas/login?schoolCertify=10497",
-                #     self.account["username"], self.account["password"])
-                # self.sessions.cookies.clear()
-                # result1 = self.sessions.get(url, verify=False, cookies={
-                #     "SESSION": SESSION,
-                #     "WT-prd-login-schoolCertify": "10497",
-                #     "WT-prd-rememberme": "false",
-                #     "WT-prd-login-schoolId": "f8d0cbf5d0d5aed8d698612d4212b7a9",
-                #     "WT-prd-login-type": "3",
-                #     "WT-prd-redirectUrl": "null",
-                #     "WT-prd-language": "zh-CN"
-                # })
                 self.sessions.get("https://infra.ai-augmented.com/api/auth/oauth/onAccountAuthRedirect")
                 # self.sessions.get("https://whut.ai-augmented.com/api/jw-starcmooc/user/authorCallback?cb=https://whut.ai-augmented.com/app/jx-web/mycourse")
                 self.headers["Authorization"] = f'Bearer {self.sessions.cookies.get("WT-prd-access-token")}'
@@ -201,7 +183,7 @@ class Sign_xy:
         userinfo = json.loads(self.getUserInfo().text)
         realname = userinfo["result"]["realname"]
         # signInfo = userinfo["result"]["sign"]  # 可能是签到信息，暂且留空,不用留空。2023.05.16 证明为有签到任务也不存在此数据
-        print("Login successfully. Welcome, {}".format(realname))
+        print("Login success. Welcome, {}".format(realname))
         self.relogin = False
         if os.path.exists(os.path.split(os.path.realpath(__file__))[0] + "/account.txt"):
             return
@@ -230,7 +212,7 @@ class Sign_xy:
 
         return True
 
-    def sign(self):  # 签到函数
+    def sign(self):  # 签到函数，目测签到加了神秘验证，当前已经弃用
         if not self.times:
             self.times = 1
         else:
@@ -304,34 +286,6 @@ class Sign_xy:
                 for i in tasks:
                     if i["task_type"] == 1 and i["finish"] == 0:
                         try:
-                            # self.sessions.post(
-                            #     "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
-                            #     json={
-                            #         "media_type": 1,  # 类型为录音, 可以乱填
-                            #         "duration": 1,  # 总时间，建议200-300
-                            #         "played": 200,  # 播放到的位置，单位秒
-                            #         "watched_duration": 200  # 已经看过的时长
-                            #     })
-                            # result = self.sessions.get(
-                            #     "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(
-                            #         i["quote_id"])).json()
-                            # if result["code"] == 60009:
-                            #     result = self.sessions.get(
-                            #         "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"])).json()  # 先请求一次获得duration,但是他好像没对这里做duration鉴权，duration为1返回的数据也是1，导致可以不用先请求 ps: 也许存在sql注入？
-                            #     if result.get("data") is None:
-                            #         continue
-                            # else:
-                            #     result = result["data"]
-                            # watched_duration = max(0, float(result["duration"]) - float(result["watched_duration"]) + 1)
-
-                            # self.sessions.post(
-                            #     "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
-                            #     json={
-                            #         "media_type": 1,  # 类型为录音, 可以乱填
-                            #         "duration": float(result["duration"]) + 1,  # 总时间，建议200-300
-                            #         "played": float(result["duration"]) + 1,  # 播放到的位置，单位秒
-                            #         "watched_duration": watched_duration * 10  # 已经看过的时长
-                            #     })
                             self.sessions.post(
                                 "https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{}".format(i["quote_id"]),
                                 json={
@@ -348,7 +302,6 @@ class Sign_xy:
                                     "group_id": i["group_id"]
                                 })
                             count += 1
-                            # time.sleep(1)
                         except requests.exceptions.SSLError:
                             pass
                         except KeyError:
@@ -358,41 +311,43 @@ class Sign_xy:
             print(str(type(e)) + ":" + str(e))
 
     def set_record(self, group_id):
-        while True:
-            try:
-                target = int(input("请输入刷的时间（单位小时）："))
-                break
-            except Exception as e:
-                print("输入错误，请输入正确的时间（阿拉伯数字）")
-
         task = self.get_tasks(group_id)
-        print("开始刷时长")
+        print("开始刷时长, 请耐心等待，若需要取消直接中断程序即可")
         j = 0
-        async def post(user_id, group_id, resourceId, headers, cookies):
-            # session.post(f'https://{self.headers["Host"]}/api/jx-iresource/learnLength/learnRecord', json={
-            #     "user_id": user_id,
-            #     "group_id": group_id,
-            #     "clientType": 1,
-            #     "roleType": 1,
-            #     "resourceId": resourceId
-            # })
+        async def post_learn_record(user_id, group_id, resourceId, headers, cookies, video_id):
             try:
                 async with httpx.AsyncClient(verify=False, headers=headers, cookies=cookies,
                                              timeout=30) as client:
+                        vod_res = await client.get(f"https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{video_id}")
+                        if vod_res.status_code != 200:
+                            raise Exception(vod_res.text)
+                        vod_res_json = vod_res.json()
+                        if vod_res_json['success']:
+                            await client.post(
+                                f"https://ccnu.ai-augmented.com/api/jx-iresource/vod/duration/{video_id}/v2", json=sign({
+                                    "media_type": 1,  # 类型为录音, 可以乱填
+                                    "duration": vod_res_json["data"]["duration"],  # 总时间，建议200-300
+                                    "played": float(vod_res_json["data"]["played"]) + randint(0, 100),  # 播放到的位置，单位秒, 随机0-100数
+                                    "watched_duration": randint(0, 30)  # 已经看过的时长, 这个是增加视频学习的时长
+                                }))
 
-                        await client.post(f'https://{headers["host"]}/api/jx-iresource/learnLength/learnRecord', json=sign({
+                        res = await client.post(f'https://{headers["host"]}/api/jx-iresource/learnLength/learnRecord', json=sign({
                             "user_id": user_id,
                             "group_id": group_id,
                             "clientType": 1,
                             "roleType": 1,
                             "resourceId": resourceId
                         }))
+                        if res.json()['message'] != 'ok':
+                            raise Exception(res.json()['message'])
+
             except Exception as e:
-                pass
+                print(e)
+
         async def running(tasks):
             await asyncio.gather(*(item for item in tasks))
         userId = self.getUserInfo().json()["result"]["authorId"]
-        for i in range(target * 15):
+        while True:
             if len(task) == 0:
                 print("无任务，跳过")
                 break
@@ -400,10 +355,12 @@ class Sign_xy:
             cookies = self.sessions.cookies
             headers = self.sessions.headers
             for k in range(5):
-                asyncio_task.append(post(userId, group_id, task[j]["quote_id"], headers, cookies))
-                j = (j + 1) % len(task)
+                # 五个协程, 之前的逻辑是只要观看一次视频就会增加视频的时间时长（如视频2分钟就会直接增加2分钟学习时长），但新api好像加了验证？
+                # TODO: 可能要改为与现实时间相同的挂机，如每5秒访问一次learnRecord, 由于接口为黑箱，暂时无法确定
+                asyncio_task.append(post_learn_record(userId, group_id, task[j]["quote_id"], headers, cookies, task[j]["quote_id"]))
+                j = (j + 1) % len(task) # 在task内循环
             asyncio.run(running(asyncio_task))
-        print("已完成，若不放心请多刷几次")
+        # print("已完成，若不放心请多刷几次")
         # self.getUserInfo().json()["result"]["authorId"]
 
     def get_open_course(self, group_id):  # 获取签到的课程信息
