@@ -1,6 +1,7 @@
-package client
+package whut
 
 import (
+	"net/http"
 	"net/url"
 	"strings"
 )
@@ -16,4 +17,13 @@ func PythonCompatibleEncode(str string) string {
 	encoded = strings.ReplaceAll(encoded, "%7E", "~")
 	encoded = strings.ReplaceAll(encoded, "%2E", ".")
 	return encoded
+}
+
+func GetCookie(c []*http.Cookie, name string) string {
+	for _, cookie := range c {
+		if cookie.Name == name {
+			return cookie.Value
+		}
+	}
+	return ""
 }

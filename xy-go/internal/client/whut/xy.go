@@ -1,4 +1,4 @@
-package client
+package whut
 
 import (
 	"bytes"
@@ -9,7 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/twoonefour/sign_xy/xy-go/internal/model"
 	"github.com/twoonefour/sign_xy/xy-go/pkg/str"
+	"log"
 	"net/http"
+	"net/url"
 	"resty.dev/v3"
 	"slices"
 	"strconv"
@@ -40,7 +42,6 @@ func NewClient(username, password string) *Client {
 		"Access-Control-Allow-Origin":  "*",
 	})
 	rClient.SetBaseURL("https://infra.ai-augmented.com")
-	rClient.SetProxy("http://127.0.0.1:9099")
 	client := &Client{
 		username: username,
 		password: password,
@@ -116,7 +117,8 @@ func (c *Client) Sign(queryBody interface{}, options ...model.SignOptions) (*mod
 	}, nil
 }
 
-func (c *Client) login(clientId, schoolName, redirectyUri string) (bool, error) {
+// 登陆
+func (c *Client) login(clientId, schoolName, redirectUri string) (bool, error) {
 	path := "/api/auth/login/loginByMobileOrAccount"
 	req := c.rClient.R()
 	_loginReq := loginReq{
@@ -125,12 +127,12 @@ func (c *Client) login(clientId, schoolName, redirectyUri string) (bool, error) 
 		State:       str.RandomString(6),
 		ClientId:    clientId,
 		SchoolId:    schoolName,
-		RedirectUri: redirectyUri,
+		RedirectUri: redirectUri,
 	}
 	req.SetBody(_loginReq)
 	var _loginResp loginResp
 	req.SetResult(&_loginResp)
-	_, err := req.Execute("POST", path)
+	_, err := req.Execute(http.MethodPost, path)
 	if err != nil {
 		return false, err
 	}
@@ -138,12 +140,30 @@ func (c *Client) login(clientId, schoolName, redirectyUri string) (bool, error) 
 		return false, fmt.Errorf("getschool err: %s", _loginResp.Message)
 	}
 	var _listAccountsResp listAccountsResp
-	c.rClient.R().SetResult(&_listAccountsResp).Get("/api/auth/login/listAccounts?isVerifyAccount=true")
+	if _, err := c.rClient.R().SetResult(&_listAccountsResp).Get("/api/auth/login/listAccounts?isVerifyAccount=true"); err != nil {
+		return false, err
+	} else if len(_listAccountsResp.Data.Accounts) == 0 {
+		return false, fmt.Errorf("getAccount err: %s", _listAccountsResp.Message)
+	}
+	// 这下面不需要处理错误，因为上面已经都处理过了, 到这一步已经登陆成功了
 	c.rClient.R().SetBody(map[string]string{
 		"xyAccountId": _listAccountsResp.Data.Accounts[0].Id,
 	}).Post("/api/auth/login/bySelectAccount")
+	// WT-prd-access-token
 	c.rClient.R().Get("/api/auth/oauth/onAccountAuthRedirect")
+	c.rClient.SetBaseURL("https://whut.ai-augmented.com")
+	tk := GetCookie(c.rClient.CookieJar().Cookies(&url.URL{Host: "ai-augmented.com", Scheme: "https"}), "WT-prd-access-token")
+	c.rClient.SetHeader("Authorization", "Bearer "+tk)
+	log.Println(c.getMe())
 	return true, nil
+}
+
+// 个人信息，判断登陆成功的依据
+func (c *Client) getMe() (string, error) {
+	path := "/api/jw-starcmooc/user/currentUserInfo"
+	base := "https://whut.ai-augmented.com"
+	resp, err := c.rClient.R().Get(fmt.Sprintf("%s%s", base, path))
+	return resp.String(), err
 }
 
 func (c *Client) getSchools(clientId string) ([]school, error) {
@@ -160,4 +180,39 @@ func (c *Client) getSchools(clientId string) ([]school, error) {
 	}
 
 	return _schoolsResp.Data.School, nil
+}
+
+// groupid是课程信息，别问我为什么这样命名，他就是这样命名的
+func (c *Client) getGroupId() ([]course, error) {
+	path := "/api/jx-iresource/group/student/groups?time_flag=1"
+	var courseResp listCourseResp
+	if _, err := c.rClient.R().SetResult(&courseResp).Get(path); err != nil {
+		return nil, nil
+	}
+	// 牛魔的这里又变成0是登陆成功了，上面又是200是登陆成功，老冯子没了？
+	if courseResp.Code != 0 {
+		return nil, fmt.Errorf("getCourse err: %s", courseResp.Message)
+	}
+	return courseResp.Data, nil
+}
+
+func (c *Client) SetRecord(courseId string) error {
+	return nil
+}
+
+// 获取任务点信息，如每一个ppt 视频需要刷的任务点
+func (c *Client) getTasks(courseId string) ([]tasks, error) {
+	path := "/api/jx-stat/group/task/queryTaskNotices"
+	req := c.rClient.R()
+	req.SetQueryParams(map[string]string{
+		"group_id": courseId,
+		"role":     "1",
+	})
+	var _queryTasksResp queryTasksResp
+	req.SetResult(&_queryTasksResp)
+	_, err := req.Execute(http.MethodGet, path)
+	if err != nil {
+		return nil, err
+	}
+	return _queryTasksResp.Data.StudentTasks, nil
 }

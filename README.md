@@ -10,16 +10,18 @@
 ***如果觉得好用请点一个免费的star，这对我真的很重要***
 
 # Configuration
-## Install Module
+## python version
+python版本流程如下
+### Install Module
 ```
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-## Modify username and password
+### Modify username and password
 第一次登录的时候你需要输入你的账号密码，之后会保存到本地目录
 
 username为学号，password为你的明文密码，有小雅自带的加密登录，~~武理跳转统一门户登录~~
-# Usage
+### Usage
 ```
 python ./main.py -t # 刷时长, 时长功能我记得是第二天才会统计，若刷完后第二天没有统计，请发issue
 python ./main.py -f # 刷课
@@ -28,7 +30,14 @@ python ./main.py -h # 帮助
 这个程序会在目录下生成一个Authorization.txt的文件用于存放token，同时会生成一个group_id.txt的文件，group_id.txt作为课程列表缓存，避免反复访问api，然后程序会遍历这些课程一个个签到
 
 **注意，请在每个学期开始的时候清除目录下group_id.txt文件,否则将不会刷新课程**
+## go version
+go目前还没完善（懒），但已经实现了大概框架，完整实现了武理登陆，但还没写main(懒), 有兴趣的话可以使用go版本
 
+用法如下
+
+```Bash
+git clone https://github.com/twoonefour/sign_xy && cd xy-go
+```
 # 更新日志
 2024/11/29 更新了接口加密参数，详见`Signature.py`，目前`刷时长`和`武理的登陆模块`是正常使用的，其他功能不保证使用
 ![屏幕截图 2024-11-29 170612](https://github.com/user-attachments/assets/0920e3cd-0824-43dd-bcc0-556351058a8c)
